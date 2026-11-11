@@ -116,6 +116,10 @@ nav button.on{color:var(--accent-text);box-shadow:inset 0 3px 0 var(--accent)}
 input[type=checkbox]{accent-color:var(--accent)}
 input:focus-visible,textarea:focus-visible,.btn:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 #ivDlg.hard{background:var(--grad)}
+#ivCfg{display:grid;grid-template-columns:1fr 1fr 1.6fr 1fr;gap:8px;margin-top:12px;align-items:end}
+#ivCfg label{display:flex;flex-direction:column;gap:4px;min-width:0}
+#ivCfg input,#ivCfg select{width:100%;min-width:0;text-align:center;padding:10px 4px}
+#ivDlg .dlg-row{justify-content:center}
 .editrow{display:grid;grid-template-columns:1fr auto auto auto;gap:6px;margin:0;padding:8px 0;border-top:1px solid var(--line)}
 .editrow .pename{grid-column:1/-1}
 .editrow .btn{min-width:44px;padding:8px}
@@ -125,11 +129,13 @@ input:focus-visible,textarea:focus-visible,.btn:focus-visible{outline:2px solid 
 .eyebrow .linkish{font-size:12px;letter-spacing:0;text-transform:none;font-weight:400;min-height:0;padding:0}
 .card.top h2{font-size:20px;margin:0}
 .navbtn{min-width:44px;padding:8px 0;background:var(--card)}
-.strip{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin:10px 0 8px}
+.strip{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;margin:10px 0 8px}
 .sd{font:inherit;color:var(--ink);background:var(--card);border:1px solid transparent;border-radius:10px;padding:5px 0 6px;min-height:58px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:1px}
 .sd span{font-size:11px;color:var(--muted)} .sd b{font-size:15px}
 .sd i{width:8px;height:8px;border-radius:50%;border:2px solid transparent;box-sizing:border-box}
 .sd i.session{border-color:var(--accent)} .sd i.game{background:var(--ink)} .sd i.dn{background:var(--good)} .sd i.skip{background:var(--line)}
+.sd.gd{background:color-mix(in srgb,var(--accent) 16%,var(--card));border-color:var(--accent)}
+.sd em{font-style:normal;font-size:12px;line-height:1.15;display:flex;flex-direction:column;align-items:center;color:var(--ink)} .sd em small{font-size:10px;font-weight:700;font-variant-numeric:tabular-nums}
 .sd.now b{color:var(--accent-text)} .sd.sel{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
 .prog{height:8px;border-radius:99px;background:var(--chip);overflow:hidden;margin:10px 0 2px}
 .prog i{display:block;height:100%;background:var(--grad);border-radius:99px;transition:width .25s}
@@ -194,12 +200,12 @@ main{padding-top:14px} .card{box-shadow:0 1px 2px rgba(60,30,0,.04)}
 <dialog id="askDlg"><p id="askMsg"></p><div class="dlg-row"><button class="btn primary" id="askYes">Yes</button><button class="btn" id="askNo">No</button></div></dialog>
 <dialog id="ivDlg">
   <div id="ivPhase">Interval timer</div>
-  <div id="ivBig">–</div>
+  <div id="ivBig" hidden></div>
   <p class="small" id="ivRound" style="text-align:center"></p>
   <div class="row" id="ivCfg">
     <label class="small">Hard<input class="tiny" id="ivWork" type="number" min="1" inputmode="decimal"></label>
     <label class="small">Easy<input class="tiny" id="ivRest" type="number" min="0" inputmode="decimal"></label>
-    <label class="small">in<select id="ivUnit"><option value="1">seconds</option><option value="60">minutes</option></select></label>
+    <label class="small">Unit<select id="ivUnit"><option value="1">seconds</option><option value="60">minutes</option></select></label>
     <label class="small">Rounds<input class="tiny" id="ivRounds" type="number" min="1" inputmode="numeric"></label>
   </div>
   <div class="dlg-row" id="ivPre"><button class="btn" id="ivSave">Save as quick button</button><button class="btn" id="ivDel" hidden>Remove this button</button></div>
@@ -823,10 +829,11 @@ function coreCard(date) {
     : `<p class="muted small">No list yet. Paste your Google Keep note on the <button class="linkish" data-tab="physio">Physio core</button> screen.</p>`;
   return `<div class="card"><div class="spread"><h2>Physio core</h2><span class="small muted">${days} of 7 days this week</span></div>
     ${list}
+    ${ph && ph.lines.length ? '<p class="small muted" style="margin:6px 0 0">Tick every box and the round is counted and the ticks are cleared.</p>' : ''}
     <div class="row" style="margin-top:8px">
       <button class="btn primary" data-act="core-round">+ Round done</button>
       <span><b>${c.rounds}</b> ${c.rounds === 1 ? 'round' : 'rounds'} today</span>
-      ${c.rounds ? '<button class="linkish" data-act="core-undo">undo</button>' : ''}
+      ${c.rounds ? '<button class="btn" data-act="core-undo" aria-label="Remove one round">− Round</button>' : ''}
     </div></div>`;
 }
 /* Where the yoga button goes: your own Down Dog share link if set (opens the app on iOS and Android);
@@ -873,7 +880,8 @@ function renderToday() {
   const strip = DAYKEYS.map((k, i) => {
     const d = addDays(mon, i), t = dayInfo(d), s = data.sessions[d];
     const dot = s && s.status === 'done' ? 'dn' : s && (s.status === 'skipped' || s.readiness === 'unwell') ? 'skip' : t.type === 'session' && !(t.day.optional && t.wi.light) ? 'session' : t.type === 'game' ? 'game' : '';
-    return `<button class="sd${d === date ? ' sel' : ''}${d === today ? ' now' : ''}" data-act="open-day" data-v="${d}" aria-label="${fmtDate(d, true)}"><span>${k[0].toUpperCase() + k[1]}</span><b>${parseDate(d).getDate()}</b><i class="${dot}"></i></button>`;
+    const gd = t.type === 'game', gt = gd && t.day.games && t.day.games[0] ? t.day.games[0].time : '';
+    return `<button class="sd${gd ? ' gd' : ''}${d === date ? ' sel' : ''}${d === today ? ' now' : ''}" data-act="open-day" data-v="${d}" aria-label="${fmtDate(d, true)}${gd ? ', game' + (gt ? ' at ' + esc(gt) : '') : ''}"><span>${k[0].toUpperCase() + k[1]}</span><b>${parseDate(d).getDate()}</b>${gd ? `<em>🏀${gt ? `<small>${esc(gt)}</small>` : ''}</em>` : `<i class="${dot}"></i>`}</button>`;
   }).join('');
   return `<div class="card top"><div class="spread"><div><div class="eyebrow">${isToday ? 'Today' : '<button class="linkish" data-act="day" data-v="0">← Back to today</button>'}</div><h2>${fmtDate(date, true)}</h2></div>
       <span class="row"><button class="btn navbtn" data-act="day" data-v="-7" aria-label="Previous week">‹</button><button class="btn navbtn" data-act="day" data-v="7" aria-label="Next week">›</button></span></div>
@@ -1055,7 +1063,7 @@ $('#ivDel').onclick = () => {
 function ivStop(msg) {
   clearInterval(iv.timer); iv.timer = null; iv.start = 0;
   $('#ivDlg').classList.remove('hard'); $('#ivCfg').hidden = false; $('#ivPre').hidden = false;
-  $('#ivPhase').textContent = msg || 'Interval timer'; $('#ivBig').textContent = msg ? '✓' : '–'; $('#ivRound').textContent = '';
+  $('#ivPhase').textContent = msg || 'Interval timer'; $('#ivBig').textContent = msg ? '✓' : ''; $('#ivBig').hidden = !msg; $('#ivRound').textContent = '';
 }
 function ivTick() {
   const lead = 5, el = (Date.now() - iv.start) / 1000, cyc = iv.work + iv.rest;
@@ -1069,7 +1077,7 @@ function ivTick() {
   const key = phase + round;
   if (key !== iv.key) { if (iv.key) beep(phase === 'HARD' ? 2 : 1, phase === 'HARD' ? 990 : 660); iv.key = key; }
   $('#ivDlg').classList.toggle('hard', phase === 'HARD');
-  $('#ivPhase').textContent = phase; $('#ivBig').textContent = left > 60 ? mmss(Math.ceil(left)) : Math.ceil(left);
+  $('#ivPhase').textContent = phase; $('#ivBig').hidden = false; $('#ivBig').textContent = left > 60 ? mmss(Math.ceil(left)) : Math.ceil(left);
   $('#ivRound').textContent = round ? `Round ${round} of ${iv.rounds}` : `${iv.rounds} × ${ivDur(iv.work)} hard / ${ivDur(iv.rest)} easy`;
 }
 $('#ivStart').onclick = ivStart; $('#ivStop').onclick = () => ivStop();
@@ -1171,7 +1179,16 @@ view.addEventListener('click', async e => {
 view.addEventListener('input', e => { const el = e.target; if ((el.dataset.field === 'pe' || el.dataset.field === 'per') && physioEdit) physioEdit[+el.dataset.i][el.dataset.field === 'pe' ? 'name' : 'reps'] = el.value; });
 view.addEventListener('change', e => {
   const el = e.target, act = el.dataset.act, f = el.dataset.field, date = viewDate;
-  if (act === 'core-check') { const i = +el.dataset.i; return setCore(date, c => { c.checked = el.checked ? [...new Set([...c.checked, i])] : c.checked.filter(x => x !== i); }); }
+  if (act === 'core-check') {
+    const i = +el.dataset.i, n = data.physio.current ? data.physio.current.lines.length : 0;
+    setCore(date, c => { c.checked = (el.checked ? [...new Set([...c.checked, i])] : c.checked.filter(x => x !== i)).filter(x => x < n); });
+    // Every box ticked: count the round and clear the ticks (after a moment, so the last tick is seen).
+    if (n && coreOf(date).checked.length >= n) setTimeout(() => {
+      if (coreOf(date).checked.length < n) return;
+      setCore(date, c => { c.rounds = (c.rounds || 0) + 1; c.checked = []; }); render();
+    }, 2000);
+    return;
+  }
   if (act === 'set') { settings[el.dataset.k] = el.checked; saveSettings(); if (el.dataset.k === 'keepAwake') wakeLockSync(); return; }
   if (act === 'week-light') { data.weekFlags[el.dataset.v] = { light: el.checked, t: now() }; persist(); return render(); }
   if (f === 'weight') return touchSession(date, s => { s.weights[el.dataset.i] = el.value.trim(); });
