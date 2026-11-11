@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>4th Quarter Ready</title>
 <meta name="description" content="Training plan and tracker: sessions, physio core, Achilles log.">
-<meta name="theme-color" content="#f4f5f7" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#101418" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#e8590c" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#e8590c" media="(prefers-color-scheme: dark)">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="4Q Ready">
 <link rel="manifest" href="manifest.webmanifest">
@@ -14,12 +14,13 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <style>
 :root{
-  --bg:#f4f5f7; --card:#ffffff; --ink:#151a20; --muted:#5d6875; --line:#dfe3e8;
-  --accent:#d9480f; --accent-ink:#ffffff; --soft:#fff1e8; --good:#2b8a3e; --bad:#c92a2a; --warn:#b7791f; --chip:#eceff3;
+  --bg:#fdf7f0; --card:#ffffff; --ink:#1f1a15; --muted:#6b5f53; --line:#f0e0cd;
+  --accent:#e8590c; --accent-ink:#1c1105; --accent-text:#b4470a; --soft:#fff0dd; --good:#2b8a3e; --bad:#c92a2a; --warn:#b7791f; --chip:#f8ecdd;
+  --grad:linear-gradient(135deg,#f76707,#fcc419); --head:linear-gradient(135deg,#e8590c,#c2410c);
 }
 @media (prefers-color-scheme: dark){
-  :root{ --bg:#101418; --card:#1a2027; --ink:#eef1f4; --muted:#9aa5b1; --line:#2c353f;
-    --accent:#ff922b; --accent-ink:#1a1206; --soft:#2b2118; --good:#69db7c; --bad:#ff8787; --warn:#ffd43b; --chip:#252d36; }
+  :root{ --bg:#15110d; --card:#211a14; --ink:#f6efe7; --muted:#b3a595; --line:#3b2f23;
+    --accent:#ff922b; --accent-ink:#1c1105; --accent-text:#ffb454; --soft:#33240f; --good:#69db7c; --bad:#ff8787; --warn:#ffd43b; --chip:#2c231a; }
 }
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
@@ -96,12 +97,54 @@ th{color:var(--muted);font-weight:600;border-top:0}
 .bars i.none{background:var(--line)} .bars i.hi{background:var(--bad)}
 details summary{cursor:pointer;min-height:44px;display:flex;align-items:center;font-weight:600}
 @media (min-width:700px){ .cols{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start} .cols .card{margin:0 0 12px} }
+/* ---- colour theme: orange / amber ---- */
+header{background:var(--head);border-bottom:0;color:#fff} header h1{color:#fff}
+#syncStatus{color:rgba(255,255,255,.92)}
+#acctBtn{background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.4);color:#fff}
+.card h2,.card h3{color:var(--accent-text)}
+.card h2 .muted,.card h3 .tag{font-weight:400}
+.card.top{background:var(--soft);border-color:transparent;border-left:5px solid var(--accent)}
+.btn.primary{background:var(--grad);border-color:transparent}
+.circle{border-color:var(--accent)} .circle.on{background:var(--grad);border-color:transparent}
+.ex .reps{color:var(--accent-text)}
+.score.on{background:var(--grad);border-color:transparent}
+nav button.on{color:var(--accent-text);box-shadow:inset 0 3px 0 var(--accent)}
+#restBar{background:var(--grad);color:var(--accent-ink)}
+#restBar .btn{background:rgba(255,255,255,.4);border-color:transparent;color:var(--accent-ink)}
+.linkish,a,.tag.w,.wkrow.today .d{color:var(--accent-text)}
+.bars i{background:var(--grad)} .bars i.none{background:var(--line)} .bars i.hi{background:var(--bad)}
+input[type=checkbox]{accent-color:var(--accent)}
+input:focus-visible,textarea:focus-visible,.btn:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+#ivDlg.hard{background:var(--grad)}
+.editrow{display:grid;grid-template-columns:1fr auto auto auto;gap:6px;margin:6px 0}
+.editrow .btn{min-width:44px;padding:8px}
+/* ---- layout refinements ---- */
+.brand{flex:1;min-width:0} header h1{flex:none;line-height:1.2} #syncStatus{display:block;text-align:left;line-height:1.2}
+.eyebrow{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-text)}
+.eyebrow .linkish{font-size:12px;letter-spacing:0;text-transform:none;font-weight:400;min-height:0;padding:0}
+.card.top h2{font-size:20px;margin:0}
+.navbtn{min-width:44px;padding:8px 0;background:var(--card)}
+.strip{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin:10px 0 8px}
+.sd{font:inherit;color:var(--ink);background:var(--card);border:1px solid transparent;border-radius:10px;padding:5px 0 6px;min-height:58px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:1px}
+.sd span{font-size:11px;color:var(--muted)} .sd b{font-size:15px}
+.sd i{width:8px;height:8px;border-radius:50%;border:2px solid transparent;box-sizing:border-box}
+.sd i.session{border-color:var(--accent)} .sd i.game{background:var(--ink)} .sd i.dn{background:var(--good)} .sd i.skip{background:var(--line)}
+.sd.now b{color:var(--accent-text)} .sd.sel{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.prog{height:8px;border-radius:99px;background:var(--chip);overflow:hidden;margin:10px 0 2px}
+.prog i{display:block;height:100%;background:var(--grad);border-radius:99px;transition:width .25s}
+.blockhead{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;background:none;border:0;padding:0;font:inherit;color:inherit;text-align:left;min-height:32px}
+button.blockhead{cursor:pointer}
+.block.done h3{color:var(--good)}
+.scores{display:grid;grid-template-columns:repeat(11,1fr);gap:3px} .score{width:auto;min-width:0}
+@media (max-width:460px){ .scores{grid-template-columns:repeat(6,1fr);gap:4px} }
+.card details summary{font-weight:400;color:var(--muted);font-size:14px}
+body:has(#restBar:not([hidden])){padding-bottom:calc(150px + env(safe-area-inset-bottom))}
+main{padding-top:14px} .card{box-shadow:0 1px 2px rgba(60,30,0,.04)}
 </style>
 </head>
 <body>
 <header>
-  <h1>4th Quarter Ready</h1>
-  <span id="syncStatus"></span>
+  <div class="brand"><h1>4th Quarter Ready</h1><span id="syncStatus"></span></div>
   <button class="btn" id="acctBtn" hidden>Sign in</button>
 </header>
 <main id="view"></main>
@@ -154,7 +197,7 @@ const PLAN = {
   repeatFrom: 5,                      // after the last week, cycle weeks 5…8
   restSeconds: 45,
   baseline: 'Starting level (self-reported, Nov 2026): 2 strict pull-ups, 15–20 push-ups.',
-  yoga: { label: 'Open Down Dog', link: 'https://www.downdogapp.com/', routine: ['offDay', 'mobility'] },
+  yoga: { label: 'Open Down Dog', link: 'https://www.downdogapp.com/', androidPackage: 'com.downdogapp', routine: ['offDay', 'mobility'] },
   achillesSteps: {
     1: 'Isometric calf holds and slow two-leg calf raises. Marching drills only.',
     2: 'Loaded raises (straight and bent knee), single-leg eccentric lowers, low A-skips, accelerations at 70%.',
@@ -374,6 +417,7 @@ function mergeData(a, b) {
   const out = { v: 1 };
   ['sessions', 'core', 'yoga', 'pain', 'tests', 'weekFlags'].forEach(k => out[k] = mergeMap(a[k], b[k]));
   out.achilles = newer(a.achilles, b.achilles);
+  const yl = newer(a.yogaLink, b.yogaLink); if (yl) out.yogaLink = yl;
   // Physio lists: the newest "current" stays current, every other list ends up in the archive (once).
   const cur = newer(a.physio.current, b.physio.current);
   const byId = {};
@@ -549,9 +593,12 @@ function blockHtml(b, s, editable) {
   const test = b.lib.test ? (() => { const t = data.tests[viewDate] || {}; return `<div class="row" style="margin:8px 0">
       <label class="small">Strict pull-ups<input class="short" type="number" min="0" inputmode="numeric" data-field="test-pullups" value="${t.pullups ?? ''}"></label>
       <label class="small">Push-ups<input class="short" type="number" min="0" inputmode="numeric" data-field="test-pushups" value="${t.pushups ?? ''}"></label></div>`; })() : '';
-  return `<div class="block">
-    <div class="spread"><h3>${esc(b.lib.name)}${b.note ? ` <span class="tag">${esc(b.note)}</span>` : ''}</h3><span class="small muted">${b.sets > 1 ? b.sets + ' sets' : ''}</span></div>
-    ${b.items.map(it => `<div class="ex"><span class="reps">${esc(it.reps)}</span><span>${esc(it.name)}${it.gated ? ' <span class="tag w">easier version</span>' : ''}${it.physioCheck ? ' <span class="tag w">ask physio</span>' : ''}</span>${it.how ? `<span class="how">${esc(it.how)}</span>` : ''}</div>`).join('')}
+  const complete = editable && done >= b.sets, folded = complete && !openBlocks.has(viewDate + ':' + b.i);
+  const title = `<h3>${complete ? '✓ ' : ''}${esc(b.lib.name)}${b.note ? ` <span class="tag">${esc(b.note)}</span>` : ''}</h3>`;
+  return `<div class="block${complete ? ' done' : ''}">
+    ${complete ? `<button class="blockhead" data-act="toggle-block" data-i="${b.i}" aria-expanded="${!folded}">${title}<span class="small muted">${folded ? 'show' : 'hide'}</span></button>`
+      : `<div class="blockhead">${title}<span class="small muted">${b.sets > 1 ? done + ' of ' + b.sets + ' sets' : ''}</span></div>`}
+    ${folded ? '' : b.items.map(it => `<div class="ex"><span class="reps">${esc(it.reps)}</span><span>${esc(it.name)}${it.gated ? ' <span class="tag w">easier version</span>' : ''}${it.physioCheck ? ' <span class="tag w">ask physio</span>' : ''}</span>${it.how ? `<span class="how">${esc(it.how)}</span>` : ''}</div>`).join('')}
     ${test}
     <div class="spread" style="margin:8px 0"><div class="circles">${circles}</div>
       ${b.lib.load ? `<input class="short" placeholder="kg used" data-field="weight" data-i="${b.i}" value="${esc((s && s.weights && s.weights[b.i]) || '')}" aria-label="Weight used for ${esc(b.lib.name)}">` : ''}</div>
@@ -560,10 +607,10 @@ function blockHtml(b, s, editable) {
 }
 function sessionCard(date, di) {
   const { day, wi } = di, s = sess(date);
-  const head = `<div class="spread"><h2>${esc(day.title)}</h2><span class="small muted">about ${day.minutes} min</span></div>`;
+  const head = `<h2 style="margin-bottom:0">${esc(day.title)}</h2><p class="small muted" style="margin:0 0 8px">about ${day.minutes} min${day.optional ? ' · optional' : ''}</p>`;
   if (day.optional && wi.light) return `<div class="card">${head}<p class="muted">Dropped this week: with a midweek game or double-header the optional session is rest.</p></div>`;
   const r = s && s.readiness;
-  const pick = `<p class="small muted" style="margin:4px 0">${day.optional ? 'Optional third session. ' : ''}Readiness check: how do you feel?</p>
+  const pick = `<p class="small muted" style="margin:4px 0">Readiness check: how do you feel?</p>
     <div class="seg">
       <button class="btn${r === 'normal' ? ' on' : ''}" data-act="ready" data-v="normal">Normal</button>
       <button class="btn${r === 'light' ? ' on' : ''}" data-act="ready" data-v="light">Tired / mild symptoms</button>
@@ -582,10 +629,12 @@ function sessionCard(date, di) {
   return `<div class="card">${head}${pick}
     ${light ? `<div class="note"><b>Light version</b>: about half the sets, no accelerations or intervals.${wi.light ? ' (Game week.)' : ''}</div>` : ''}
     ${stepNote}
+    ${(() => { const total = blocks.reduce((n, b) => n + b.sets, 0), dn = blocks.reduce((n, b) => n + Math.min(b.sets, (s.ticks && s.ticks[b.i]) || 0), 0);
+      return `<div class="prog" role="progressbar" aria-valuemin="0" aria-valuemax="${total}" aria-valuenow="${dn}"><i style="width:${total ? Math.round(dn / total * 100) : 0}%"></i></div><p class="small muted" style="margin:0 0 4px">${dn} of ${total} sets done</p>`; })()}
     ${blocks.map(b => blockHtml(b, s, true)).join('')}
     <div class="block"><label class="small muted" for="notes">Notes</label><textarea id="notes" data-field="notes" style="min-height:64px" placeholder="How it went, weights, anything to remember">${esc(s.notes || '')}</textarea></div>
     <div class="row" style="margin-top:10px">
-      <button class="btn primary" data-act="finish">${done ? '✓ Session done (tap to reopen)' : 'Finish session'}</button>
+      <button class="btn primary" style="flex:1" data-act="finish">${done ? '✓ Session done (tap to reopen)' : 'Finish session'}</button>
       ${done ? '' : `<button class="btn" data-act="skip">${s.status === 'skipped' ? 'Skipped (tap to undo)' : 'Skip'}</button>`}
     </div></div>`;
 }
@@ -613,21 +662,35 @@ function coreCard(date) {
       ${c.rounds ? '<button class="linkish" data-act="core-undo">undo</button>' : ''}
     </div></div>`;
 }
+/* Where the yoga button goes: your own Down Dog share link if set (opens the app on iOS and Android);
+   otherwise on Android an intent link that opens the installed app, and elsewhere the website. */
+function yogaHref() {
+  const own = data.yogaLink && data.yogaLink.url;
+  if (own) return own;
+  if (/Android/i.test(navigator.userAgent) && PLAN.yoga.androidPackage)
+    return `intent://${PLAN.yoga.link.slice(8)}#Intent;scheme=https;package=${PLAN.yoga.androidPackage};S.browser_fallback_url=${encodeURIComponent(PLAN.yoga.link)};end`;
+  return PLAN.yoga.link;
+}
 function yogaCard(date, type) {
   const y = data.yoga[date], done = !!(y && y.done);
   return `<div class="card"><div class="spread"><h2>${type === 'recovery' ? 'Recovery: yoga / mobility' : 'Yoga / mobility'} <span class="small muted">(10–20 min)</span></h2><span class="tag">optional</span></div>
     <p class="small muted" style="margin:4px 0">Hips, hamstrings, ankles/calves, back. A suggestion, never a requirement.</p>
     <div class="row"><button class="btn${done ? ' on' : ''}" data-act="yoga">${done ? '✓ Done' : 'Done'}</button>
       <button class="linkish" data-act="routine">Short routine</button>
-      <a href="${esc(PLAN.yoga.link)}" target="_blank" rel="noopener">${esc(PLAN.yoga.label)}</a></div></div>`;
+      <a href="${esc(yogaHref())}" target="_blank" rel="noopener">${esc(PLAN.yoga.label)}</a></div>
+    <details><summary>Down Dog link</summary>
+      <p class="small muted" style="margin:0 0 6px">To open the Down Dog app directly (and on your favourite practice), share a practice or preset from Down Dog, copy the link and paste it here. Without it, the button opens the app on Android if it can, otherwise the website.</p>
+      <div class="row" style="flex-wrap:nowrap"><input id="yogaLink" type="url" inputmode="url" placeholder="https://www.downdogapp.com/share/…" value="${esc((data.yogaLink && data.yogaLink.url) || '')}"><button class="btn" data-act="yoga-link">Save</button></div>
+      <p class="small" id="yogaLinkMsg" style="margin:4px 0 0"></p></details></div>`;
 }
 function timersCard() {
   return `<div class="card"><h2>Timers</h2>
     <div class="row"><span class="small muted">Rest</span>${[30, 45, 60, 90].map(n => `<button class="btn" data-act="rest" data-v="${n}">${n} s</button>`).join('')}</div>
-    <div class="row" style="margin-top:8px"><button class="btn" data-act="interval" data-work="30" data-rest="60" data-rounds="6">Interval timer</button></div>
+    <div class="row" style="margin-top:8px"><button class="btn" data-act="interval" data-work="30" data-rest="60" data-rounds="6">Interval timer (30 s / 60 s)</button></div>
+    <details><summary>Timer settings</summary>
     <label class="check"><input type="checkbox" data-act="set" data-k="autoRest" ${settings.autoRest ? 'checked' : ''}><span>Start the rest timer when I tick a set</span></label>
     <label class="check"><input type="checkbox" data-act="set" data-k="keepAwake" ${settings.keepAwake ? 'checked' : ''}><span>Keep the screen awake${'wakeLock' in navigator ? '' : ' (not supported in this browser)'}</span></label>
-    <label class="check"><input type="checkbox" data-act="set" data-k="sound" ${settings.sound ? 'checked' : ''}><span>Beep when a timer ends</span></label></div>`;
+    <label class="check"><input type="checkbox" data-act="set" data-k="sound" ${settings.sound ? 'checked' : ''}><span>Beep when a timer ends</span></label></details></div>`;
 }
 function renderToday() {
   const date = viewDate, di = dayInfo(date), { wi, type } = di, isToday = date === todayIso();
@@ -639,9 +702,15 @@ function renderToday() {
   if (type === 'session') main = sessionCard(date, di);
   else if (type === 'game') main = `<div class="card"><h2>Game day</h2><p class="muted" style="margin:0">No training. Warm up well before tip-off; log the Achilles before and after.</p></div>`;
   const showYoga = type === 'off' || type === 'recovery';
-  return `<div class="card"><div class="spread"><h2>${isToday ? 'Today' : ''} ${fmtDate(date, true)}</h2>
-      <span class="row"><button class="btn" data-act="day" data-v="-1" aria-label="Previous day">‹</button><button class="btn" data-act="day" data-v="1" aria-label="Next day">›</button></span></div>
-      ${isToday ? '' : '<button class="linkish" data-act="day" data-v="0">Back to today</button>'}${wk}</div>
+  const mon = mondayOf(date), today = todayIso();
+  const strip = DAYKEYS.map((k, i) => {
+    const d = addDays(mon, i), t = dayInfo(d), s = data.sessions[d];
+    const dot = s && s.status === 'done' ? 'dn' : s && (s.status === 'skipped' || s.readiness === 'unwell') ? 'skip' : t.type === 'session' && !(t.day.optional && t.wi.light) ? 'session' : t.type === 'game' ? 'game' : '';
+    return `<button class="sd${d === date ? ' sel' : ''}${d === today ? ' now' : ''}" data-act="open-day" data-v="${d}" aria-label="${fmtDate(d, true)}"><span>${k[0].toUpperCase() + k[1]}</span><b>${parseDate(d).getDate()}</b><i class="${dot}"></i></button>`;
+  }).join('');
+  return `<div class="card top"><div class="spread"><div><div class="eyebrow">${isToday ? 'Today' : '<button class="linkish" data-act="day" data-v="0">← Back to today</button>'}</div><h2>${fmtDate(date, true)}</h2></div>
+      <span class="row"><button class="btn navbtn" data-act="day" data-v="-7" aria-label="Previous week">‹</button><button class="btn navbtn" data-act="day" data-v="7" aria-label="Next week">›</button></span></div>
+      <div class="strip">${strip}</div>${wk}</div>
     <div class="cols"><div>${main}${showYoga ? yogaCard(date, type) : ''}${type === 'session' ? timersCard() : ''}</div>
     <div>${coreCard(date)}${achillesCard(date, type)}${type === 'session' ? '' : timersCard()}</div></div>`;
 }
@@ -657,7 +726,8 @@ function dayStatus(date) {
   else if (s && Object.values(s.ticks || {}).some(Boolean)) pill = '<span class="pill">started</span>';
   return { label: day.title, minutes: day.minutes, pill };
 }
-let weekView = null;
+const openBlocks = new Set();   // finished blocks the user re-opened (finished blocks fold their exercise list)
+let weekView = null, physioEdit = null;   // physioEdit: the lines being edited on the Physio core screen
 function renderWeek() {
   const mon = weekView || mondayOf(viewDate), wi = weekInfo(mon), today = todayIso();
   const rows = DAYKEYS.map((k, i) => {
@@ -671,7 +741,7 @@ function renderWeek() {
   const overview = PLAN.weeks.map(w => `<tr><td><b>${w.n}</b></td><td><b>${esc(w.title)}</b>${w.outline ? ' <span class="tag">outline</span>' : ''}<br><span class="small muted">${esc(w.purpose)}</span><br>
       <span class="small">${DAYKEYS.filter(k => w.days[k] && w.days[k].blocks).map(k => `${k[0].toUpperCase() + k.slice(1)} ${w.days[k].minutes} min${w.days[k].optional ? ' (opt.)' : ''}`).join(' · ')}</span></td></tr>`).join('');
   const lib = Object.entries(PLAN.blocks).map(([id, b]) => `<details><summary>${esc(b.name)}</summary>${b.items.map(it => `<div class="ex"><span class="reps">${esc(it.reps)}</span><span>${esc(it.name)}</span>${it.how ? `<span class="how">${esc(it.how)}</span>` : ''}</div>`).join('')}</details>`).join('');
-  return `<div class="card"><div class="spread"><h2>${wi.pre ? 'Before the plan' : `Week ${wi.n}${wi.repeatOf ? ` (repeats week ${wi.repeatOf})` : ''}`}</h2>
+  return `<div class="card top"><div class="spread"><h2>${wi.pre ? 'Before the plan' : `Week ${wi.n}${wi.repeatOf ? ` (repeats week ${wi.repeatOf})` : ''}`}</h2>
       <span class="row"><button class="btn" data-act="week" data-v="-7" aria-label="Previous week">‹</button><button class="btn" data-act="week" data-v="7" aria-label="Next week">›</button></span></div>
     <p class="small muted" style="margin:0">${fmtDate(mon)} – ${fmtDate(addDays(mon, 6))}${wi.week ? ' · ' + esc(wi.week.title) : ''}</p>
     ${wi.week ? `<p class="small" style="margin:6px 0">${esc(wi.week.purpose)}</p>
@@ -688,7 +758,12 @@ function renderPhysio() {
   const flagged = [];
   Object.values(PLAN.blocks).forEach(b => b.items.forEach(it => { if (it.physioCheck) flagged.push(`<li><b>${esc(it.name)}</b> (${esc(b.name)}): ${esc(it.physioCheck)}</li>`); }));
   return `<div class="card"><div class="spread"><h2>Current list</h2><span class="small muted">${cur ? 'last updated ' + fmtStamp(cur.t) : ''}</span></div>
-      ${cur ? `<ol style="margin:6px 0;padding-left:22px">${cur.lines.map(l => `<li style="padding:3px 0">${esc(l)}</li>`).join('')}</ol>` : '<p class="muted">No list yet.</p>'}
+      ${physioEdit ? physioEdit.map((l, i) => `<div class="editrow"><input data-field="pe" data-i="${i}" value="${esc(l)}" aria-label="Exercise ${i + 1}" placeholder="Exercise">
+          <button class="btn" data-act="pe-up" data-i="${i}" aria-label="Move up" ${i ? '' : 'disabled'}>↑</button><button class="btn" data-act="pe-down" data-i="${i}" aria-label="Move down" ${i < physioEdit.length - 1 ? '' : 'disabled'}>↓</button><button class="btn" data-act="pe-del" data-i="${i}" aria-label="Remove">✕</button></div>`).join('') +
+          `<div class="row" style="margin:8px 0"><button class="btn" data-act="pe-add">+ Add exercise</button><button class="btn primary" data-act="pe-save">Save changes</button><button class="btn" data-act="pe-cancel">Cancel</button></div>`
+        : cur ? `<ol style="margin:6px 0;padding-left:22px">${cur.lines.map(l => `<li style="padding:3px 0">${esc(l)}</li>`).join('')}</ol>
+          <div class="row" style="margin:0 0 8px"><button class="btn" data-act="physio-edit">Edit list</button></div>`
+        : `<p class="muted">No list yet.</p><div class="row" style="margin:0 0 8px"><button class="btn" data-act="physio-edit">Type it in</button></div>`}
       <p class="small muted" style="margin:0">Do it as often as you can, ideally daily, on top of your sessions. These are your physio’s exercises; the app shows them exactly as written.</p></div>
     <div class="card"><h2>${cur ? 'Paste a new list' : 'Paste your list'}</h2>
       <p class="small muted" style="margin:0 0 8px">Copy the note from Google Keep and paste it here. Each non-empty line becomes one exercise.${cur ? ' The current list moves to the archive.' : ''}</p>
@@ -854,6 +929,7 @@ view.addEventListener('click', async e => {
       touchSession(date, s => { const cur = s.ticks[i] || 0; added = cur !== k + 1; s.ticks[i] = added ? k + 1 : k; });
       if (added && settings.autoRest) restStart(PLAN.restSeconds || 45);
       break; }
+    case 'toggle-block': { const k = date + ':' + b.dataset.i; openBlocks.has(k) ? openBlocks.delete(k) : openBlocks.add(k); break; }
     case 'finish': touchSession(date, s => { s.status = s.status === 'done' ? null : 'done'; }); break;
     case 'skip': touchSession(date, s => { s.status = s.status === 'skipped' ? null : 'skipped'; }); break;
     case 'pain': setPain(date, b.dataset.field, +v); break;
@@ -861,13 +937,33 @@ view.addEventListener('click', async e => {
     case 'core-round': setCore(date, c => { c.rounds = (c.rounds || 0) + 1; c.checked = []; }); break;
     case 'core-undo': setCore(date, c => { c.rounds = Math.max(0, (c.rounds || 0) - 1); }); break;
     case 'yoga': data.yoga[date] = { done: !(data.yoga[date] && data.yoga[date].done), t: now() }; persist(); break;
+    case 'yoga-link': {
+      const u = $('#yogaLink').value.trim(), m = $('#yogaLinkMsg');
+      if (u && !(u.toLowerCase().startsWith('https://') && !/\s/.test(u))) { m.textContent = 'That does not look like a link (it should start with https://).'; return; }
+      data.yogaLink = { url: u, t: now() }; persist(); break; }
     case 'routine': return info(`<h2 style="margin-top:0">Short routine (10–20 min)</h2>` + PLAN.yoga.routine.map(id => { const bl = PLAN.blocks[id]; return bl ? `<h3 style="margin:10px 0 4px">${esc(bl.name)}</h3>` + bl.items.map(it => `<div class="ex"><span class="reps">${esc(it.reps)}</span><span>${esc(it.name)}</span>${it.how ? `<span class="how">${esc(it.how)}</span>` : ''}</div>`).join('') : ''; }).join(''));
     case 'rest': return restStart(+v);
     case 'interval': return ivOpen(+b.dataset.work, +b.dataset.rest, +b.dataset.rounds);
+    case 'physio-edit': physioEdit = data.physio.current ? [...data.physio.current.lines] : ['']; break;
+    case 'pe-add': physioEdit.push(''); break;
+    case 'pe-del': physioEdit.splice(+b.dataset.i, 1); break;
+    case 'pe-up': case 'pe-down': { const i = +b.dataset.i, j = act === 'pe-up' ? i - 1 : i + 1; [physioEdit[i], physioEdit[j]] = [physioEdit[j], physioEdit[i]]; break; }
+    case 'pe-cancel': physioEdit = null; break;
+    case 'pe-save': {
+      // Small edits keep the same list (no archive entry); only pasting a new list archives the old one.
+      const lines = physioEdit.map(l => l.trim()).filter(Boolean);
+      if (!lines.length) return;
+      const cur = data.physio.current, t = now();
+      if (JSON.stringify(lines) !== JSON.stringify(cur ? cur.lines : null)) {
+        data.physio.current = cur ? { ...cur, lines, t } : { id: 'p' + t, lines, t };
+        const c = data.core[todayIso()]; if (c && c.checked && c.checked.length) data.core[todayIso()] = { ...c, checked: [], t };
+        persist();
+      }
+      physioEdit = null; break; }
     case 'physio-save': {
       const lines = parseKeep($('#keepText').value);
       if (!lines.length) return;
-      replacePhysio(lines); break; }
+      replacePhysio(lines); physioEdit = null; break; }
     case 'physio-view': { const l = data.physio.archive[+b.dataset.i]; return info(`<h2 style="margin-top:0">List from ${fmtStamp(l.t)}</h2><p class="small muted">Archived ${fmtStamp(l.archivedAt)}</p><ol style="padding-left:22px">${l.lines.map(x => `<li>${esc(x)}</li>`).join('')}</ol>`); }
     case 'physio-restore': {
       const l = data.physio.archive[+b.dataset.i];
@@ -884,6 +980,7 @@ view.addEventListener('click', async e => {
   }
   render();
 });
+view.addEventListener('input', e => { const el = e.target; if (el.dataset.field === 'pe' && physioEdit) physioEdit[+el.dataset.i] = el.value; });
 view.addEventListener('change', e => {
   const el = e.target, act = el.dataset.act, f = el.dataset.field, date = viewDate;
   if (act === 'core-check') { const i = +el.dataset.i; return setCore(date, c => { c.checked = el.checked ? [...new Set([...c.checked, i])] : c.checked.filter(x => x !== i); }); }

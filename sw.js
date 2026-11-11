@@ -1,7 +1,7 @@
 /* Service worker: makes the app start offline.
    Only this site's own files are cached. Requests to other servers (Firebase sign-in and sync)
    pass straight through. For a new release: bump VERSION. */
-const VERSION = "v1";
+const VERSION = "v2";
 const CACHE = "4q-ready-" + VERSION;
 const SHELL = ["./", "index.html", "firebase-config.js", "manifest.webmanifest", "icon.svg", "icon-192.png", "icon-512.png", "icon-maskable-512.png", "apple-touch-icon.png"];
 
