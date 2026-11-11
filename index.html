@@ -116,7 +116,8 @@ nav button.on{color:var(--accent-text);box-shadow:inset 0 3px 0 var(--accent)}
 input[type=checkbox]{accent-color:var(--accent)}
 input:focus-visible,textarea:focus-visible,.btn:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 #ivDlg.hard{background:var(--grad)}
-.editrow{display:grid;grid-template-columns:1fr auto auto auto;gap:6px;margin:6px 0}
+.editrow{display:grid;grid-template-columns:1fr auto auto auto;gap:6px;margin:0;padding:8px 0;border-top:1px solid var(--line)}
+.editrow .pename{grid-column:1/-1}
 .editrow .btn{min-width:44px;padding:8px}
 /* ---- layout refinements ---- */
 .brand{flex:1;min-width:0} header h1{flex:none;line-height:1.2} #syncStatus{display:block;text-align:left;line-height:1.2}
@@ -140,11 +141,36 @@ button.blockhead{cursor:pointer}
 .card details summary{font-weight:400;color:var(--muted);font-size:14px}
 body:has(#restBar:not([hidden])){padding-bottom:calc(150px + env(safe-area-inset-bottom))}
 main{padding-top:14px} .card{box-shadow:0 1px 2px rgba(60,30,0,.04)}
+#optBtn{background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.4);color:#fff;min-width:44px;padding:8px 0;font-size:18px}
+.game{display:grid;grid-template-columns:52px 1fr;gap:8px;padding:6px 0;border-top:1px solid var(--line)}
+.game b{color:var(--accent-text);font-variant-numeric:tabular-nums}
+#optBody h3{margin:16px 0 0;color:var(--accent-text)}
+.themes{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px;margin:8px 0}
+.swatch{font:inherit;font-size:13px;color:var(--ink);background:var(--chip);border:2px solid transparent;border-radius:12px;padding:8px 6px;min-height:64px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px}
+.swatch i{width:100%;height:22px;border-radius:7px}
+.swatch.on{border-color:var(--accent)}
+/* ---- colour themes (Options). Default is amber; each theme only swaps the colour variables. ---- */
+:root[data-theme=blue]{ --bg:#f3f7fd; --line:#d9e4f5; --accent:#1c64d9; --accent-ink:#fff; --accent-text:#1a4fb0; --soft:#e3eeff; --chip:#e9f0fb;
+  --grad:linear-gradient(135deg,#1857c0,#2f7fe0); --head:linear-gradient(135deg,#1c64d9,#1548a8); }
+:root[data-theme=green]{ --bg:#f3f8f3; --line:#d6e8d8; --accent:#2b8a3e; --accent-ink:#fff; --accent-text:#226e32; --soft:#e2f3e4; --chip:#e8f1e9;
+  --grad:linear-gradient(135deg,#237a36,#2f9247); --head:linear-gradient(135deg,#2b8a3e,#1f6b2f); }
+:root[data-theme=crimson]{ --bg:#fdf5f5; --line:#f2dada; --accent:#c92a2a; --accent-ink:#fff; --accent-text:#a51d1d; --soft:#ffe8e8; --chip:#f8eaea;
+  --grad:linear-gradient(135deg,#c92a2a,#e03131); --head:linear-gradient(135deg,#c92a2a,#9c1c1c); }
+:root[data-theme=graphite]{ --bg:#f4f5f7; --line:#dfe3e8; --accent:#343a40; --accent-ink:#fff; --accent-text:#343a40; --soft:#e9ecef; --chip:#eceff3;
+  --grad:linear-gradient(135deg,#343a40,#5c6670); --head:linear-gradient(135deg,#343a40,#1a1d21); }
+@media (prefers-color-scheme: dark){
+  :root[data-theme=blue]{ --bg:#0e1218; --card:#171d27; --line:#2a3546; --ink:#eef2f8; --muted:#9daabd; --accent:#6ea8fe; --accent-text:#8fbcff; --soft:#16263f; --chip:#1f2836; }
+  :root[data-theme=green]{ --bg:#0e1410; --card:#17201a; --line:#2a3a2e; --ink:#eef5ef; --muted:#9db3a2; --accent:#69db7c; --accent-text:#8ce99a; --soft:#173021; --chip:#1f2a22; }
+  :root[data-theme=crimson]{ --bg:#150e0e; --card:#211616; --line:#3d2626; --ink:#f8eeee; --muted:#b9a1a1; --accent:#ff8787; --accent-text:#ffa8a8; --soft:#3a1717; --chip:#2c1c1c; }
+  :root[data-theme=graphite]{ --bg:#101214; --card:#1a1d21; --line:#2c3238; --ink:#f1f3f5; --muted:#a3acb5; --accent:#ced4da; --accent-ink:#111418; --accent-text:#e9ecef; --soft:#262b31; --chip:#23282e;
+    --grad:linear-gradient(135deg,#ced4da,#f1f3f5); }
+}
 </style>
 </head>
 <body>
 <header>
   <div class="brand"><h1>4th Quarter Ready</h1><span id="syncStatus"></span></div>
+  <button class="btn" id="optBtn" aria-label="Options" title="Options">⚙</button>
   <button class="btn" id="acctBtn" hidden>Sign in</button>
 </header>
 <main id="view"></main>
@@ -163,6 +189,7 @@ main{padding-top:14px} .card{box-shadow:0 1px 2px rgba(60,30,0,.04)}
 </nav>
 
 <dialog id="acctDlg"><div id="acctBody"></div><div class="dlg-row"><button class="btn" data-close>Close</button></div></dialog>
+<dialog id="optDlg"><div id="optBody"></div><div class="dlg-row"><button class="btn" data-close>Close</button></div></dialog>
 <dialog id="infoDlg"><div id="infoBody"></div><div class="dlg-row"><button class="btn" data-close>Close</button></div></dialog>
 <dialog id="askDlg"><p id="askMsg"></p><div class="dlg-row"><button class="btn primary" id="askYes">Yes</button><button class="btn" id="askNo">No</button></div></dialog>
 <dialog id="ivDlg">
@@ -196,6 +223,9 @@ const PLAN = {
   startDate: '2026-11-16',            // Monday of week 1
   repeatFrom: 5,                      // after the last week, cycle weeks 5…8
   restSeconds: 45,
+  // Address of the small calendar proxy (see proxy/worker.js and README). Needed because the federation's
+  // calendar server does not let a web page read it directly. Leave '' to use file upload only.
+  calendarProxy: 'https://4q-ready-calendar.dan-9d4.workers.dev/',
   baseline: 'Starting level (self-reported, Nov 2026): 2 strict pull-ups, 15–20 push-ups.',
   yoga: { label: 'Open Down Dog', link: 'https://www.downdogapp.com/', androidPackage: 'com.downdogapp', routine: ['offDay', 'mobility'] },
   achillesSteps: {
@@ -418,6 +448,7 @@ function mergeData(a, b) {
   ['sessions', 'core', 'yoga', 'pain', 'tests', 'weekFlags'].forEach(k => out[k] = mergeMap(a[k], b[k]));
   out.achilles = newer(a.achilles, b.achilles);
   const yl = newer(a.yogaLink, b.yogaLink); if (yl) out.yogaLink = yl;
+  const gc = newer(a.gameCal, b.gameCal); if (gc) out.gameCal = gc;
   // Physio lists: the newest "current" stays current, every other list ends up in the archive (once).
   const cur = newer(a.physio.current, b.physio.current);
   const byId = {};
@@ -451,7 +482,7 @@ async function flushSave() {
 }
 document.addEventListener('visibilitychange', () => {
   if (document.hidden && saveTimer) flushSave();
-  if (!document.hidden) { if (account.user && account.dirty && !saveTimer) flushSave(); wakeLockSync(); render(); }
+  if (!document.hidden) { if (account.user && account.dirty && !saveTimer) flushSave(); wakeLockSync(); render(); refreshGames(false); }
 });
 window.addEventListener('online', () => { if (account.user && account.dirty) flushSave(); });
 
@@ -478,7 +509,7 @@ async function setAccount(user, cloudData, saveFn, loadFn, loadedOk) {
     Object.assign(account, { user: null, saveFn: null, loadFn: null, status: '', dirty: false, cloudLoaded: false });
     data = normalize(load('data', null));
   }
-  render(); renderAccount();
+  render(); renderAccount(); refreshGames(false);
 }
 
 /* ---------- small custom confirm (native confirm() is unreliable in installed PWAs) ---------- */
@@ -503,11 +534,18 @@ function weekInfo(dateIso) {
     const from = Math.min(Math.max((PLAN.repeatFrom || 1) - 1, 0), PLAN.weeks.length - 1), len = PLAN.weeks.length - from;
     idx = from + ((diff - from) % len); repeatOf = PLAN.weeks[idx].n;
   }
-  return { id: mon, n: diff + 1, week: PLAN.weeks[idx], repeatOf, light: !!(data.weekFlags[mon] && data.weekFlags[mon].light) };
+  // Lighter week: your own toggle wins; otherwise the calendar decides (a game Mon–Fri, or more than one game that week).
+  const flag = data.weekFlags[mon], auto = autoLight(mon);
+  return { id: mon, n: diff + 1, week: PLAN.weeks[idx], repeatOf, light: flag ? !!flag.light : auto, lightAuto: !flag && auto };
 }
 function dayInfo(dateIso) {
   const wi = weekInfo(dateIso);
-  const day = (wi.week && wi.week.days[dayKey(dateIso)]) || { type: 'off' };
+  let day = (wi.week && wi.week.days[dayKey(dateIso)]) || { type: 'off' };
+  if (calActive()) {            // game days come from the calendar instead of the plan's fixed Saturday
+    const g = gamesOn(dateIso);
+    if (g.length) day = { type: 'game', games: g, replaced: day.blocks ? day.title : null };
+    else if (day.type === 'game') day = { type: 'off' };
+  }
   const type = day.blocks ? 'session' : (day.type || 'off');
   return { wi, day, type };
 }
@@ -528,6 +566,124 @@ function sessionBlocks(day, light) {
   });
   return out;
 }
+
+/* ================= Game calendar =================
+   Each referee can set their own calendar link (Options). The link is saved with the data and synced;
+   the downloaded games are cached on the device only and refreshed a few times a day. */
+let games = load('games', null);      // { url, fetchedAt, list: [{ uid, date, time, title, league, location }] }
+let calMsg = '';
+const calUrl = () => (data.gameCal && data.gameCal.url) || '';
+const calActive = () => !!(calUrl() && games && games.url === calUrl());
+const gamesOn = d => calActive() ? games.list.filter(g => g.date === d) : [];
+function autoLight(mon) {
+  if (!calActive()) return false;
+  const end = addDays(mon, 6), fri = addDays(mon, 4), wk = games.list.filter(g => g.date >= mon && g.date <= end);
+  return wk.length > 1 || wk.some(g => g.date <= fri);
+}
+function parseICS(text) {
+  const lines = String(text).replace(/\r\n?/g, '\n').replace(/\n[ \t]/g, '').split('\n');
+  const unesc = s => s.replace(/\\n/gi, '\n').replace(/\\([,;\\])/g, '$1');
+  const when = v => {
+    const m = /^(\d{4})(\d\d)(\d\d)(?:T(\d\d)(\d\d)\d*(Z)?)?/.exec(v.trim()); if (!m) return null;
+    if (m[6]) { const d = new Date(Date.UTC(+m[1], m[2] - 1, +m[3], +m[4], +m[5])); return { date: iso(d), time: pad(d.getHours()) + ':' + pad(d.getMinutes()) }; }
+    return { date: `${m[1]}-${m[2]}-${m[3]}`, time: m[4] ? `${m[4]}:${m[5]}` : '' };
+  };
+  const out = []; let ev = null, skip = false;
+  for (const l of lines) {
+    if (l === 'BEGIN:VEVENT') { ev = {}; continue; }
+    if (l === 'END:VEVENT') { if (ev && ev.start && ev.status !== 'CANCELLED') out.push(ev); ev = null; continue; }
+    if (l === 'BEGIN:VALARM') { skip = true; continue; }
+    if (l === 'END:VALARM') { skip = false; continue; }
+    const i = l.indexOf(':'); if (!ev || skip || i < 0) continue;
+    const name = l.slice(0, i).split(';')[0].toUpperCase(), v = l.slice(i + 1);
+    if (name === 'DTSTART') ev.start = when(v);
+    else if (name === 'SUMMARY') ev.summary = unesc(v);
+    else if (name === 'LOCATION') ev.location = unesc(v).replace(/\s*,\s*/g, ', ').trim();
+    else if (name === 'UID') ev.uid = v.trim();
+    else if (name === 'STATUS') ev.status = v.trim().toUpperCase();
+  }
+  // Only the game itself is kept (teams, league, place, time); the description with other people's names is not stored.
+  return out.map(e => {
+    const [first, ...rest] = (e.summary || 'Game').split('\n').map(s => s.trim()).filter(Boolean);
+    return { uid: e.uid || e.start.date + e.start.time, date: e.start.date, time: e.start.time, title: first || 'Game', league: rest.join(' ').replace(/^\[|\]$/g, ''), location: e.location || '' };
+  }).sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
+}
+const cleanCalUrl = u => u.trim().replace(/^webcals?:\/\//i, 'https://');
+const isHttps = u => u.toLowerCase().startsWith('https://') && !/\s/.test(u);
+async function fetchICS(url) {
+  const get = async u => {
+    const r = await fetch(u, { cache: 'no-store' }); if (!r.ok) throw new Error('HTTP ' + r.status);
+    const t = await r.text(); if (!/BEGIN:VCALENDAR/.test(t)) throw new Error('not a calendar'); return t;
+  };
+  try { return await get(url); }
+  catch (e) { if (!PLAN.calendarProxy) throw e; return get(PLAN.calendarProxy + '?url=' + encodeURIComponent(url)); }
+}
+function setGames(url, list) { games = { url, fetchedAt: Date.now(), list }; store('games', games); }
+async function refreshGames(force) {
+  const url = calUrl();
+  if (!url || url === 'file' || (!force && calActive() && Date.now() - games.fetchedAt < 6 * 3600e3)) return;
+  calMsg = 'Loading…'; renderOptions();
+  try { setGames(url, parseICS(await fetchICS(url))); calMsg = ''; }
+  catch (e) { calMsg = calActive() ? 'Could not refresh just now; showing the games loaded earlier.' : 'Could not load this calendar. Check the link, or upload the .ics file below.'; }
+  render(); renderOptions();
+}
+
+/* ================= Options dialog: colour theme, game calendar, Down Dog link ================= */
+const THEMES = { amber: ['Amber', '#e8590c', '#fcc419'], blue: ['Court blue', '#1c64d9', '#2f7fe0'], green: ['Green', '#2b8a3e', '#2f9247'], crimson: ['Crimson', '#c92a2a', '#e03131'], graphite: ['Graphite', '#343a40', '#5c6670'] };
+function applyTheme() {
+  const t = THEMES[settings.theme] ? settings.theme : 'amber';
+  if (t === 'amber') delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = t;
+  document.querySelectorAll('meta[name=theme-color]').forEach(m => m.content = THEMES[t][1]);
+}
+function renderOptions() {
+  if (!$('#optDlg').open) return;
+  const url = calUrl(), today = todayIso(), up = calActive() ? games.list.filter(g => g.date >= today) : [];
+  const cur = THEMES[settings.theme] ? settings.theme : 'amber';
+  $('#optBody').innerHTML = `<h2 style="margin-top:0">Options</h2>
+    <h3 style="margin-top:0">Colour theme</h3>
+    <div class="themes">${Object.entries(THEMES).map(([id, [name, c1, c2]]) => `<button class="swatch${id === cur ? ' on' : ''}" data-act="theme" data-v="${id}" aria-pressed="${id === cur}"><i style="background:linear-gradient(135deg,${c1},${c2})"></i>${name}</button>`).join('')}</div>
+    <p class="small muted" style="margin:0">Saved on this device. Light or dark follows your phone’s setting.</p>
+    <h3>Game calendar</h3>
+    <p class="small muted" style="margin:4px 0 8px">Paste the link to your referee calendar (.ics or webcal). Game days then come from your calendar, and a week with a game from Monday to Friday, or with more than one game, switches to the lighter version by itself. You can still override that in the Week view.</p>
+    <input id="calUrl" type="url" inputmode="url" placeholder="webcal://www.luxembourg.basketball/…/XXXXXXXX.ics" value="${esc(url === 'file' ? '' : url)}" aria-label="Calendar link">
+    <div class="dlg-row"><button class="btn primary" data-act="cal-save">Save and load</button>${url && url !== 'file' ? '<button class="btn" data-act="cal-refresh">Refresh</button>' : ''}${url ? '<button class="btn" data-act="cal-remove">Remove</button>' : ''}</div>
+    <p class="small" id="calMsg" style="margin:8px 0 0">${esc(calMsg) || (calActive() ? `Loaded ${new Date(games.fetchedAt).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })} · ${games.list.length} games, ${up.length} upcoming` : url ? '' : 'No calendar set: Saturdays count as game days, as in the plan.')}</p>
+    ${up.slice(0, 5).map(g => `<div class="game"><b>${esc(g.time || '–')}</b><span>${fmtDate(g.date)} · ${esc(g.title)}<span class="small muted" style="display:block">${esc(g.location)}</span></span></div>`).join('')}
+    <details><summary>Upload an .ics file instead</summary>
+      <p class="small muted" style="margin:0 0 6px">If the link cannot be loaded, download the calendar file and choose it here. It will not update by itself.</p>
+      <input type="file" id="calFile" accept=".ics,text/calendar"></details>
+    <h3>Down Dog link</h3>
+    <p class="small muted" style="margin:4px 0 8px">Share a practice or preset from Down Dog, copy the link and paste it here. The yoga button then opens the app on that practice. Leave empty for the default.</p>
+    <div class="row" style="flex-wrap:nowrap"><input id="optYoga" type="url" inputmode="url" placeholder="https://www.downdogapp.com/share/…" value="${esc((data.yogaLink && data.yogaLink.url) || '')}" aria-label="Down Dog link"><button class="btn" data-act="yoga-save">Save</button></div>
+    <p class="small" id="optYogaMsg" style="margin:4px 0 0"></p>`;
+}
+$('#optBtn').addEventListener('click', () => { $('#optDlg').showModal(); renderOptions(); });
+$('#optBody').addEventListener('click', e => {
+  const b = e.target.closest('[data-act]'); if (!b) return;
+  const act = b.dataset.act;
+  if (act === 'theme') { settings.theme = b.dataset.v; saveSettings(); applyTheme(); renderOptions(); }
+  else if (act === 'cal-save') {
+    const u = cleanCalUrl($('#calUrl').value);
+    if (!isHttps(u)) { calMsg = 'That does not look like a calendar link.'; return renderOptions(); }
+    data.gameCal = { url: u, t: now() }; persist(); refreshGames(true);
+  } else if (act === 'cal-refresh') refreshGames(true);
+  else if (act === 'cal-remove') { data.gameCal = { url: '', t: now() }; games = null; unstore('games'); calMsg = ''; persist(); render(); renderOptions(); }
+  else if (act === 'yoga-save') {
+    const u = $('#optYoga').value.trim(), m = $('#optYogaMsg');
+    if (u && !isHttps(u)) { m.textContent = 'That does not look like a link (it should start with https://).'; return; }
+    data.yogaLink = { url: u, t: now() }; persist(); render(); m.textContent = u ? 'Saved.' : 'Removed; the default is used.';
+  }
+});
+$('#optBody').addEventListener('change', e => {
+  if (e.target.id !== 'calFile' || !e.target.files[0]) return;
+  const r = new FileReader();
+  r.onload = () => {
+    try { const list = parseICS(r.result); if (!list.length) throw 0; if (!calUrl()) { data.gameCal = { url: 'file', t: now() }; persist(); } setGames(calUrl(), list); calMsg = ''; }
+    catch (err) { calMsg = 'No games found in that file.'; }
+    render(); renderOptions();
+  };
+  r.readAsText(e.target.files[0]);
+});
 
 /* ================= State changes ================= */
 let viewDate = todayIso();
@@ -568,10 +724,12 @@ function parseKeep(text) {
     .map(l => l.replace(/^[\s​﻿]*(?:[-*•·‣▪◦–—]\s+)?(?:\[[ xX✓✔]?\]|[☐☑☒✓✔□■▢◻◼⬜✅])?\s*/u, '').trim())
     .filter(Boolean);
 }
-function replacePhysio(lines) {
+// The optional "repeats" box of a physio exercise, shown as a small tag: "5" becomes "× 5", anything else is shown as typed.
+const repTag = (list, i) => { const r = list && list.reps && list.reps[i]; return r ? ` <span class="tag w">${/^\d+$/.test(r) ? '× ' + r : esc(r)}</span>` : ''; };
+function replacePhysio(lines, reps) {
   const t = now(), ph = data.physio;
   if (ph.current) ph.archive = [{ ...ph.current, archivedAt: t }, ...ph.archive];
-  ph.current = { id: 'p' + t, lines, t };
+  ph.current = { id: 'p' + t, lines, reps: lines.map((_, i) => (reps && reps[i]) || ''), t };
   persist();
 }
 
@@ -652,7 +810,7 @@ function coreCard(date) {
   const ph = data.physio.current, c = coreOf(date), mon = mondayOf(date);
   const days = DAYKEYS.filter((_, i) => coreOf(addDays(mon, i)).rounds > 0).length;
   const list = ph && ph.lines.length
-    ? ph.lines.map((l, i) => `<label class="check"><input type="checkbox" data-act="core-check" data-i="${i}" ${c.checked && c.checked.includes(i) ? 'checked' : ''}><span>${esc(l)}</span></label>`).join('')
+    ? ph.lines.map((l, i) => `<label class="check"><input type="checkbox" data-act="core-check" data-i="${i}" ${c.checked && c.checked.includes(i) ? 'checked' : ''}><span>${esc(l)}${repTag(ph, i)}</span></label>`).join('')
     : `<p class="muted small">No list yet. Paste your Google Keep note on the <button class="linkish" data-tab="physio">Physio core</button> screen.</p>`;
   return `<div class="card"><div class="spread"><h2>Physio core</h2><span class="small muted">${days} of 7 days this week</span></div>
     ${list}
@@ -700,7 +858,10 @@ function renderToday() {
        <p class="small muted" style="margin:2px 0 0">${esc(wi.week.purpose)}</p>`;
   let main = '';
   if (type === 'session') main = sessionCard(date, di);
-  else if (type === 'game') main = `<div class="card"><h2>Game day</h2><p class="muted" style="margin:0">No training. Warm up well before tip-off; log the Achilles before and after.</p></div>`;
+  else if (type === 'game') main = `<div class="card"><h2>Game day</h2>
+      ${(di.day.games || []).map(g => `<div class="game"><b>${esc(g.time || '–')}</b><span>${esc(g.title)}<span class="small muted" style="display:block">${esc([g.league, g.location].filter(Boolean).join(' · '))}</span></span></div>`).join('')}
+      ${di.day.replaced ? `<p class="note">The planned session (${esc(di.day.replaced)}) is dropped: you have a game today.</p>` : ''}
+      <p class="muted" style="margin:8px 0 0">No training. Warm up well before tip-off; log the Achilles before and after.</p></div>`;
   const showYoga = type === 'off' || type === 'recovery';
   const mon = mondayOf(date), today = todayIso();
   const strip = DAYKEYS.map((k, i) => {
@@ -717,6 +878,7 @@ function renderToday() {
 
 function dayStatus(date) {
   const { type, day, wi } = dayInfo(date), s = data.sessions[date];
+  if (type === 'game' && day.games) return { label: day.games.map(g => `Game ${g.time} · ${g.title}`).join(' / '), pill: '' };
   if (type !== 'session') return { label: type === 'game' ? 'Game' : type === 'recovery' ? 'Recovery / mobility' : 'Off', pill: '' };
   let pill = '';
   if (s && s.status === 'done') pill = '<span class="pill done">done</span>';
@@ -745,7 +907,7 @@ function renderWeek() {
       <span class="row"><button class="btn" data-act="week" data-v="-7" aria-label="Previous week">‹</button><button class="btn" data-act="week" data-v="7" aria-label="Next week">›</button></span></div>
     <p class="small muted" style="margin:0">${fmtDate(mon)} – ${fmtDate(addDays(mon, 6))}${wi.week ? ' · ' + esc(wi.week.title) : ''}</p>
     ${wi.week ? `<p class="small" style="margin:6px 0">${esc(wi.week.purpose)}</p>
-    <label class="check"><input type="checkbox" data-act="week-light" data-v="${mon}" ${wi.light ? 'checked' : ''}><span>Midweek game / double-header: use the lighter week</span></label>` : `<p class="small">The plan starts on ${fmtDate(PLAN.startDate, true)}.</p>`}
+    <label class="check"><input type="checkbox" data-act="week-light" data-v="${mon}" ${wi.light ? 'checked' : ''}><span>Midweek game / double-header: use the lighter week${wi.lightAuto ? ' <span class="tag w">set from your calendar</span>' : ''}</span></label>` : `<p class="small">The plan starts on ${fmtDate(PLAN.startDate, true)}.</p>`}
     ${rows}
     <p class="small muted" style="margin:10px 0 0">Physio core on ${coreDays} of 7 days this week.</p></div>
     <div class="card"><h2>Plan overview</h2><table>${overview}</table>
@@ -758,16 +920,19 @@ function renderPhysio() {
   const flagged = [];
   Object.values(PLAN.blocks).forEach(b => b.items.forEach(it => { if (it.physioCheck) flagged.push(`<li><b>${esc(it.name)}</b> (${esc(b.name)}): ${esc(it.physioCheck)}</li>`); }));
   return `<div class="card"><div class="spread"><h2>Current list</h2><span class="small muted">${cur ? 'last updated ' + fmtStamp(cur.t) : ''}</span></div>
-      ${physioEdit ? physioEdit.map((l, i) => `<div class="editrow"><input data-field="pe" data-i="${i}" value="${esc(l)}" aria-label="Exercise ${i + 1}" placeholder="Exercise">
+      ${physioEdit ? physioEdit.map((l, i) => `<div class="editrow"><input class="pename" data-field="pe" data-i="${i}" value="${esc(l.name)}" aria-label="Exercise ${i + 1}" placeholder="Exercise">
+          <input data-field="per" data-i="${i}" value="${esc(l.reps)}" aria-label="Repeats for exercise ${i + 1}" placeholder="Repeats, e.g. 5">
           <button class="btn" data-act="pe-up" data-i="${i}" aria-label="Move up" ${i ? '' : 'disabled'}>↑</button><button class="btn" data-act="pe-down" data-i="${i}" aria-label="Move down" ${i < physioEdit.length - 1 ? '' : 'disabled'}>↓</button><button class="btn" data-act="pe-del" data-i="${i}" aria-label="Remove">✕</button></div>`).join('') +
           `<div class="row" style="margin:8px 0"><button class="btn" data-act="pe-add">+ Add exercise</button><button class="btn primary" data-act="pe-save">Save changes</button><button class="btn" data-act="pe-cancel">Cancel</button></div>`
-        : cur ? `<ol style="margin:6px 0;padding-left:22px">${cur.lines.map(l => `<li style="padding:3px 0">${esc(l)}</li>`).join('')}</ol>
+        : cur ? `<ol style="margin:6px 0;padding-left:22px">${cur.lines.map((l, i) => `<li style="padding:3px 0">${esc(l)}${repTag(cur, i)}</li>`).join('')}</ol>
           <div class="row" style="margin:0 0 8px"><button class="btn" data-act="physio-edit">Edit list</button></div>`
         : `<p class="muted">No list yet.</p><div class="row" style="margin:0 0 8px"><button class="btn" data-act="physio-edit">Type it in</button></div>`}
       <p class="small muted" style="margin:0">Do it as often as you can, ideally daily, on top of your sessions. These are your physio’s exercises; the app shows them exactly as written.</p></div>
     <div class="card"><h2>${cur ? 'Paste a new list' : 'Paste your list'}</h2>
       <p class="small muted" style="margin:0 0 8px">Copy the note from Google Keep and paste it here. Each non-empty line becomes one exercise.${cur ? ' The current list moves to the archive.' : ''}</p>
       <textarea id="keepText" placeholder="☐ Exercise one, 5 times&#10;☐ Exercise two, 5 times"></textarea>
+      <label class="small muted" style="display:block;margin-top:8px">Repeats for each exercise (optional; you can change single ones with Edit list)
+        <input id="keepReps" class="short" style="display:block;margin-top:4px" placeholder="e.g. 5" inputmode="numeric"></label>
       <div class="row" style="margin-top:8px"><button class="btn primary" data-act="physio-save">${cur ? 'Replace current list' : 'Save list'}</button></div></div>
     <div class="card"><h2>Older lists</h2>
       ${ph.archive.length ? ph.archive.map((l, i) => `<div class="spread" style="border-top:1px solid var(--line);padding:6px 0"><span>${fmtStamp(l.t)} <span class="small muted">· ${l.lines.length} exercises</span></span>
@@ -944,32 +1109,33 @@ view.addEventListener('click', async e => {
     case 'routine': return info(`<h2 style="margin-top:0">Short routine (10–20 min)</h2>` + PLAN.yoga.routine.map(id => { const bl = PLAN.blocks[id]; return bl ? `<h3 style="margin:10px 0 4px">${esc(bl.name)}</h3>` + bl.items.map(it => `<div class="ex"><span class="reps">${esc(it.reps)}</span><span>${esc(it.name)}</span>${it.how ? `<span class="how">${esc(it.how)}</span>` : ''}</div>`).join('') : ''; }).join(''));
     case 'rest': return restStart(+v);
     case 'interval': return ivOpen(+b.dataset.work, +b.dataset.rest, +b.dataset.rounds);
-    case 'physio-edit': physioEdit = data.physio.current ? [...data.physio.current.lines] : ['']; break;
-    case 'pe-add': physioEdit.push(''); break;
+    case 'physio-edit': { const c = data.physio.current; physioEdit = c ? c.lines.map((name, i) => ({ name, reps: (c.reps && c.reps[i]) || '' })) : [{ name: '', reps: '' }]; break; }
+    case 'pe-add': physioEdit.push({ name: '', reps: '' }); break;
     case 'pe-del': physioEdit.splice(+b.dataset.i, 1); break;
     case 'pe-up': case 'pe-down': { const i = +b.dataset.i, j = act === 'pe-up' ? i - 1 : i + 1; [physioEdit[i], physioEdit[j]] = [physioEdit[j], physioEdit[i]]; break; }
     case 'pe-cancel': physioEdit = null; break;
     case 'pe-save': {
       // Small edits keep the same list (no archive entry); only pasting a new list archives the old one.
-      const lines = physioEdit.map(l => l.trim()).filter(Boolean);
+      const rows = physioEdit.map(r => ({ name: r.name.trim(), reps: r.reps.trim() })).filter(r => r.name);
+      const lines = rows.map(r => r.name), reps = rows.map(r => r.reps);
       if (!lines.length) return;
       const cur = data.physio.current, t = now();
-      if (JSON.stringify(lines) !== JSON.stringify(cur ? cur.lines : null)) {
-        data.physio.current = cur ? { ...cur, lines, t } : { id: 'p' + t, lines, t };
+      if (JSON.stringify([lines, reps]) !== JSON.stringify(cur ? [cur.lines, cur.lines.map((_, i) => (cur.reps && cur.reps[i]) || '')] : null)) {
+        data.physio.current = cur ? { ...cur, lines, reps, t } : { id: 'p' + t, lines, reps, t };
         const c = data.core[todayIso()]; if (c && c.checked && c.checked.length) data.core[todayIso()] = { ...c, checked: [], t };
         persist();
       }
       physioEdit = null; break; }
     case 'physio-save': {
-      const lines = parseKeep($('#keepText').value);
+      const lines = parseKeep($('#keepText').value), rep = $('#keepReps').value.trim();
       if (!lines.length) return;
-      replacePhysio(lines); physioEdit = null; break; }
-    case 'physio-view': { const l = data.physio.archive[+b.dataset.i]; return info(`<h2 style="margin-top:0">List from ${fmtStamp(l.t)}</h2><p class="small muted">Archived ${fmtStamp(l.archivedAt)}</p><ol style="padding-left:22px">${l.lines.map(x => `<li>${esc(x)}</li>`).join('')}</ol>`); }
+      replacePhysio(lines, lines.map(() => rep)); physioEdit = null; break; }
+    case 'physio-view': { const l = data.physio.archive[+b.dataset.i]; return info(`<h2 style="margin-top:0">List from ${fmtStamp(l.t)}</h2><p class="small muted">Archived ${fmtStamp(l.archivedAt)}</p><ol style="padding-left:22px">${l.lines.map((x, i) => `<li>${esc(x)}${repTag(l, i)}</li>`).join('')}</ol>`); }
     case 'physio-restore': {
       const l = data.physio.archive[+b.dataset.i];
       if (!await ask(`Make the list from ${fmtStamp(l.t)} the current one? The current list moves to the archive.`, 'Restore')) return;
       data.physio.archive = data.physio.archive.filter(x => x.id !== l.id);
-      replacePhysio(l.lines); break; }
+      replacePhysio(l.lines, l.reps); break; }
     case 'test-add': {
       const d = $('#tDate').value, pu = $('#tPull').value, ps = $('#tPush').value;
       if (!d || (pu === '' && ps === '')) return;
@@ -980,7 +1146,7 @@ view.addEventListener('click', async e => {
   }
   render();
 });
-view.addEventListener('input', e => { const el = e.target; if (el.dataset.field === 'pe' && physioEdit) physioEdit[+el.dataset.i] = el.value; });
+view.addEventListener('input', e => { const el = e.target; if ((el.dataset.field === 'pe' || el.dataset.field === 'per') && physioEdit) physioEdit[+el.dataset.i][el.dataset.field === 'pe' ? 'name' : 'reps'] = el.value; });
 view.addEventListener('change', e => {
   const el = e.target, act = el.dataset.act, f = el.dataset.field, date = viewDate;
   if (act === 'core-check') { const i = +el.dataset.i; return setCore(date, c => { c.checked = el.checked ? [...new Set([...c.checked, i])] : c.checked.filter(x => x !== i); }); }
@@ -1049,10 +1215,10 @@ $('#acctBody').addEventListener('click', async e => {
 });
 window.Workout = { setAccount, cloudReady() { account.available = true; renderAccount(); },
   // exposed for testing and debugging in the browser console
-  mergeData, parseKeep, exportJSON, importJSON, getData: () => data };
+  mergeData, parseKeep, parseICS, exportJSON, importJSON, getData: () => data };
 
 /* ================= Start ================= */
-render(); renderAccount(); wakeLockSync();
+applyTheme(); render(); renderAccount(); wakeLockSync(); refreshGames(false);
 // A new day while the app stays open: follow the calendar.
 let lastToday = todayIso();
 setInterval(() => { const t = todayIso(); if (t !== lastToday) { if (viewDate === lastToday) viewDate = t; lastToday = t; render(); } }, 60000);

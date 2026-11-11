@@ -12,6 +12,7 @@ Everything is in `index.html` (vanilla JS and CSS, no build step). The training 
 | `firebase-config.js` | Public Firebase web config for the project `q-ready-5216b`. No secrets. |
 | `firestore.rules` | Database rules: one private document per signed-in person. |
 | `manifest.webmanifest`, `sw.js` | Install and offline support. |
+| `proxy/worker.js` | Cloudflare Worker that passes on the referee calendar (see section 3). Deployed separately on Cloudflare. |
 | `icon.svg`, `icon-192.png`, `icon-512.png`, `icon-maskable-512.png`, `apple-touch-icon.png` | Icons. |
 
 The `.xlsx` sheets in this folder are your old plans; they are not part of the app and need not be uploaded.
@@ -33,6 +34,18 @@ The app uses its own Firebase project, `q-ready-5216b`. One-time setup in <https
 2. **Authentication → Settings → Authorized domains → Add domain**: `dankerschen.github.io`.
 3. **Build → Firestore Database → Create database**: pick a location near you, start in **production mode**.
 4. **Firestore Database → Rules**: replace everything with the contents of `firestore.rules` and click **Publish**. Each person can then read and write only their own document `workouts/{uid}`.
+
+## 3. Game calendar proxy (optional)
+
+In **Options (⚙) → Game calendar** each referee can paste the link to their own FLBB calendar (`webcal://www.luxembourg.basketball/…/XXXXXXXX.ics`). Game days then come from the calendar, and a week with a game from Monday to Friday, or with more than one game, switches to the lighter version by itself.
+
+The federation's server does not let a web page read the calendar directly, so the app needs the small proxy in `proxy/worker.js` (Cloudflare Worker, free plan). Without it, only the "Upload an .ics file" option works.
+
+1. <https://dash.cloudflare.com> → **Workers & Pages → Create → Worker**, name it e.g. `4q-ready-calendar`, **Deploy**.
+2. **Edit code**, replace everything with the contents of `proxy/worker.js`, **Deploy**.
+3. Copy the worker address (`https://4q-ready-calendar.<account>.workers.dev`) into `calendarProxy` in the `PLAN` object at the top of `index.html`, bump `VERSION` in `sw.js`, and upload.
+
+The worker only fetches `.ics` files from `luxembourg.basketball`, only answers pages from `https://dankerschen.github.io`, and stores or logs nothing. The app keeps only each game's teams, league, place and time; the list is cached on the device and refreshed a few times a day.
 
 ## How saving works
 
