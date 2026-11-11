@@ -9,8 +9,8 @@ Everything is in `index.html` (vanilla JS and CSS, no build step). The training 
 | File | Purpose |
 |---|---|
 | `index.html` | The app. Plan data at the top, logic below, Firebase module at the end. |
-| `firebase-config.js` | Public Firebase web config (same project as FretWise). No secrets. |
-| `firestore.rules` | Database rules for FretWise and 4th Quarter Ready together. |
+| `firebase-config.js` | Public Firebase web config for the project `q-ready-5216b`. No secrets. |
+| `firestore.rules` | Database rules: one private document per signed-in person. |
 | `manifest.webmanifest`, `sw.js` | Install and offline support. |
 | `icon.svg`, `icon-192.png`, `icon-512.png`, `icon-maskable-512.png`, `apple-touch-icon.png` | Icons. |
 
@@ -27,18 +27,12 @@ The `.xlsx` sheets in this folder are your old plans; they are not part of the a
 
 ## 2. Firebase (sign-in and sync)
 
-The app uses the existing FretWise project (`fretwise-5e60a`), so sign-in methods and the database already exist. Two things to do:
+The app uses its own Firebase project, `q-ready-5216b`. One-time setup in <https://console.firebase.google.com>:
 
-**Publish the updated rules**
-
-1. Open <https://console.firebase.google.com> and choose the project **fretwise-5e60a**.
-2. **Build → Firestore Database → Rules**.
-3. Replace everything in the editor with the contents of `firestore.rules` from this folder. It keeps the FretWise rule (`users/{uid}`) and adds `workouts/{uid}`, owner-only.
-4. Click **Publish**. Also copy the same `firestore.rules` into the FretWise repository so both repos match.
-
-**Check the authorised domain**
-
-*Authentication → Settings → Authorized domains* must list `dankerschen.github.io`. It is already there if FretWise is hosted under the same GitHub account.
+1. **Build → Authentication → Get started → Sign-in method**: enable **Google** and **Email/Password**.
+2. **Authentication → Settings → Authorized domains → Add domain**: `dankerschen.github.io`.
+3. **Build → Firestore Database → Create database**: pick a location near you, start in **production mode**.
+4. **Firestore Database → Rules**: replace everything with the contents of `firestore.rules` and click **Publish**. Each person can then read and write only their own document `workouts/{uid}`.
 
 ## How saving works
 
