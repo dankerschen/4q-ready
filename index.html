@@ -120,8 +120,8 @@ input:focus-visible,textarea:focus-visible,.btn:focus-visible{outline:2px solid 
 #ivCfg label{display:flex;flex-direction:column;gap:4px;min-width:0}
 #ivCfg input,#ivCfg select{width:100%;min-width:0;text-align:center;padding:10px 4px}
 #ivDlg .dlg-row{justify-content:center}
-.editrow{display:grid;grid-template-columns:1fr auto auto auto;gap:6px;margin:0;padding:8px 0;border-top:1px solid var(--line)}
-.editrow .pename{grid-column:1/-1}
+.editrow{display:grid;grid-template-columns:84px 1fr auto auto auto;gap:6px;margin:0;padding:8px 0;border-top:1px solid var(--line)}
+.editrow .pename{grid-row:1;grid-column:2/-1} .editrow .pereps{grid-row:1;grid-column:1;text-align:center} .editrow .btn:first-of-type{grid-column:3}
 .editrow .btn{min-width:44px;padding:8px}
 /* ---- layout refinements ---- */
 .brand{flex:1;min-width:0} header h1{flex:none;line-height:1.2} #syncStatus{display:block;text-align:left;line-height:1.2}
@@ -740,7 +740,7 @@ function parseKeep(text) {
     .filter(Boolean);
 }
 // The optional "repeats" box of a physio exercise, shown as a small tag: "5" becomes "× 5", anything else is shown as typed.
-const repTag = (list, i) => { const r = list && list.reps && list.reps[i]; return r ? ` <span class="tag w">${/^\d+$/.test(r) ? '× ' + r : esc(r)}</span>` : ''; };
+const repTag = (list, i) => { const r = list && list.reps && list.reps[i]; return r ? `<span class="tag w">${/^\d+$/.test(r) ? r + ' ×' : esc(r)}</span> ` : ''; };
 function replacePhysio(lines, reps) {
   const t = now(), ph = data.physio;
   if (ph.current) ph.archive = [{ ...ph.current, archivedAt: t }, ...ph.archive];
@@ -825,7 +825,7 @@ function coreCard(date) {
   const ph = data.physio.current, c = coreOf(date), mon = mondayOf(date);
   const days = DAYKEYS.filter((_, i) => coreOf(addDays(mon, i)).rounds > 0).length;
   const list = ph && ph.lines.length
-    ? ph.lines.map((l, i) => `<label class="check"><input type="checkbox" data-act="core-check" data-i="${i}" ${c.checked && c.checked.includes(i) ? 'checked' : ''}><span>${esc(l)}${repTag(ph, i)}</span></label>`).join('')
+    ? ph.lines.map((l, i) => `<label class="check"><input type="checkbox" data-act="core-check" data-i="${i}" ${c.checked && c.checked.includes(i) ? 'checked' : ''}><span>${repTag(ph, i)}${esc(l)}</span></label>`).join('')
     : `<p class="muted small">No list yet. Paste your Google Keep note on the <button class="linkish" data-tab="physio">Physio core</button> screen.</p>`;
   return `<div class="card"><div class="spread"><h2>Physio core</h2><span class="small muted">${days} of 7 days this week</span></div>
     ${list}
@@ -935,10 +935,10 @@ function renderPhysio() {
   Object.values(PLAN.blocks).forEach(b => b.items.forEach(it => { if (it.physioCheck) flagged.push(`<li><b>${esc(it.name)}</b> (${esc(b.name)}): ${esc(it.physioCheck)}</li>`); }));
   return `<div class="card"><div class="spread"><h2>Current list</h2><span class="small muted">${cur ? 'last updated ' + fmtStamp(cur.t) : ''}</span></div>
       ${physioEdit ? physioEdit.map((l, i) => `<div class="editrow"><input class="pename" data-field="pe" data-i="${i}" value="${esc(l.name)}" aria-label="Exercise ${i + 1}" placeholder="Exercise">
-          <input data-field="per" data-i="${i}" value="${esc(l.reps)}" aria-label="Repeats for exercise ${i + 1}" placeholder="Repeats, e.g. 5">
+          <input class="pereps" data-field="per" data-i="${i}" value="${esc(l.reps)}" aria-label="Repeats for exercise ${i + 1}" placeholder="Repeats">
           <button class="btn" data-act="pe-up" data-i="${i}" aria-label="Move up" ${i ? '' : 'disabled'}>↑</button><button class="btn" data-act="pe-down" data-i="${i}" aria-label="Move down" ${i < physioEdit.length - 1 ? '' : 'disabled'}>↓</button><button class="btn" data-act="pe-del" data-i="${i}" aria-label="Remove">✕</button></div>`).join('') +
           `<div class="row" style="margin:8px 0"><button class="btn" data-act="pe-add">+ Add exercise</button><button class="btn primary" data-act="pe-save">Save changes</button><button class="btn" data-act="pe-cancel">Cancel</button></div>`
-        : cur ? `<ol style="margin:6px 0;padding-left:22px">${cur.lines.map((l, i) => `<li style="padding:3px 0">${esc(l)}${repTag(cur, i)}</li>`).join('')}</ol>
+        : cur ? `<ol style="margin:6px 0;padding-left:22px">${cur.lines.map((l, i) => `<li style="padding:3px 0">${repTag(cur, i)}${esc(l)}</li>`).join('')}</ol>
           <div class="row" style="margin:0 0 8px"><button class="btn" data-act="physio-edit">Edit list</button></div>`
         : `<p class="muted">No list yet.</p><div class="row" style="margin:0 0 8px"><button class="btn" data-act="physio-edit">Type it in</button></div>`}
       <p class="small muted" style="margin:0">Do it as often as you can, ideally daily, on top of your sessions. These are your physio’s exercises; the app shows them exactly as written.</p></div>
@@ -1160,7 +1160,7 @@ view.addEventListener('click', async e => {
       const lines = parseKeep($('#keepText').value), rep = $('#keepReps').value.trim();
       if (!lines.length) return;
       replacePhysio(lines, lines.map(() => rep)); physioEdit = null; break; }
-    case 'physio-view': { const l = data.physio.archive[+b.dataset.i]; return info(`<h2 style="margin-top:0">List from ${fmtStamp(l.t)}</h2><p class="small muted">Archived ${fmtStamp(l.archivedAt)}</p><ol style="padding-left:22px">${l.lines.map((x, i) => `<li>${esc(x)}${repTag(l, i)}</li>`).join('')}</ol>`); }
+    case 'physio-view': { const l = data.physio.archive[+b.dataset.i]; return info(`<h2 style="margin-top:0">List from ${fmtStamp(l.t)}</h2><p class="small muted">Archived ${fmtStamp(l.archivedAt)}</p><ol style="padding-left:22px">${l.lines.map((x, i) => `<li>${repTag(l, i)}${esc(x)}</li>`).join('')}</ol>`); }
     case 'physio-restore': {
       const l = data.physio.archive[+b.dataset.i];
       if (!await ask(`Make the list from ${fmtStamp(l.t)} the current one? The current list moves to the archive.`, 'Restore')) return;
