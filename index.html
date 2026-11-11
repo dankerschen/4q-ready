@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>4th Quarter Ready</title>
+<meta name="description" content="Training plan and tracker: sessions, physio core, Achilles log.">
+<meta name="theme-color" content="#f4f5f7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#101418" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="4Q Ready">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<style>
+:root{
+  --bg:#f4f5f7; --card:#ffffff; --ink:#151a20; --muted:#5d6875; --line:#dfe3e8;
+  --accent:#d9480f; --accent-ink:#ffffff; --soft:#fff1e8; --good:#2b8a3e; --bad:#c92a2a; --warn:#b7791f; --chip:#eceff3;
+}
+@media (prefers-color-scheme: dark){
+  :root{ --bg:#101418; --card:#1a2027; --ink:#eef1f4; --muted:#9aa5b1; --line:#2c353f;
+    --accent:#ff922b; --accent-ink:#1a1206; --soft:#2b2118; --good:#69db7c; --bad:#ff8787; --warn:#ffd43b; --chip:#252d36; }
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  padding-bottom:calc(76px + env(safe-area-inset-bottom))}
+header{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line);
+  padding:calc(8px + env(safe-area-inset-top)) 16px 8px;display:flex;align-items:center;gap:10px}
+header h1{font-size:18px;margin:0;flex:1;white-space:nowrap}
+#syncStatus{font-size:12px;color:var(--muted);text-align:right}
+main{max-width:860px;margin:0 auto;padding:12px 16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin:0 0 12px}
+.card h2{font-size:17px;margin:0 0 6px}
+.card h3{font-size:15px;margin:0}
+.muted{color:var(--muted)} .small{font-size:13px} .good{color:var(--good)} .bad{color:var(--bad)} .warn{color:var(--warn)}
+.row{display:flex;align-items:center;gap:8px;flex-wrap:wrap} .spread>.row{flex-wrap:nowrap;flex:none} #acctBtn{white-space:nowrap}
+.spread{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.btn{font:inherit;min-height:44px;padding:8px 14px;border-radius:10px;border:1px solid var(--line);background:var(--chip);color:var(--ink);cursor:pointer}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
+.btn.wide{width:100%} .btn.on{outline:2px solid var(--accent);background:var(--soft)}
+.btn:disabled{opacity:.5}
+.linkish{background:none;border:0;color:var(--accent);font:inherit;padding:8px 0;cursor:pointer;text-decoration:underline;min-height:44px}
+.note .linkish,p .linkish{min-height:0;padding:4px 0}
+a{color:var(--accent)}
+input,textarea,select{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px;width:100%}
+textarea{min-height:120px;resize:vertical}
+input.short{width:96px} input.tiny{width:72px}
+label.check{display:flex;align-items:center;gap:10px;min-height:44px;cursor:pointer}
+label.check input{width:24px;height:24px;flex:none}
+.block{border-top:1px solid var(--line);padding:12px 0 4px}
+.block:first-of-type{border-top:0}
+.circles{display:flex;gap:8px;flex-wrap:wrap}
+.circle{width:44px;height:44px;border-radius:50%;border:2.5px solid var(--muted);background:transparent;cursor:pointer;padding:0;font-size:20px;color:var(--accent-ink)}
+.circle.on{background:var(--accent);border-color:var(--accent)}
+.circle.on::after{content:"✓"}
+.ex{display:grid;grid-template-columns:76px 1fr;gap:8px;padding:4px 0;font-size:15px}
+.ex .reps{font-weight:600;font-variant-numeric:tabular-nums}
+.ex .how{grid-column:2;font-size:13px;color:var(--muted);margin-top:-2px}
+.tag{display:inline-block;font-size:12px;padding:1px 8px;border-radius:99px;background:var(--chip);color:var(--muted);margin-left:4px;white-space:nowrap}
+.tag.w{background:var(--soft);color:var(--accent)}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.seg .btn{padding:8px 6px;font-size:14px;line-height:1.2}
+.scores{display:flex;gap:4px;flex-wrap:wrap}
+.score{width:40px;height:44px;border-radius:9px;border:1px solid var(--line);background:var(--chip);color:var(--ink);font:inherit;cursor:pointer;padding:0}
+.score.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:700}
+.note{background:var(--soft);border-radius:10px;padding:10px;margin:8px 0;font-size:14px}
+nav{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--card);border-top:1px solid var(--line);
+  display:grid;grid-template-columns:repeat(4,1fr);padding-bottom:env(safe-area-inset-bottom)}
+nav button{font:inherit;font-size:13px;min-height:60px;border:0;background:none;color:var(--muted);cursor:pointer}
+nav button.on{color:var(--accent);font-weight:700}
+nav button span{display:block;font-size:20px;line-height:1.2}
+#restBar{position:fixed;left:8px;right:8px;bottom:calc(68px + env(safe-area-inset-bottom));z-index:7;background:var(--ink);color:var(--bg);
+  border-radius:14px;padding:8px 12px;display:flex;align-items:center;gap:10px;box-shadow:0 4px 18px rgba(0,0,0,.3)}
+#restBar[hidden]{display:none}
+#restBar b{font-size:26px;font-variant-numeric:tabular-nums;flex:1}
+#restBar .btn{min-height:40px}
+dialog{border:1px solid var(--line);border-radius:16px;background:var(--card);color:var(--ink);padding:18px;width:min(520px,calc(100vw - 24px));max-height:calc(100vh - 40px)}
+dialog::backdrop{background:rgba(0,0,0,.5)}
+.dlg-row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.or{text-align:center;color:var(--muted);font-size:13px;margin:10px 0}
+#ivBig{font-size:84px;font-weight:800;text-align:center;font-variant-numeric:tabular-nums;line-height:1.1}
+#ivPhase{text-align:center;font-size:26px;font-weight:700;letter-spacing:.04em}
+#ivDlg.hard{background:var(--accent);color:var(--accent-ink)}
+.wkrow{display:grid;grid-template-columns:64px 1fr auto;gap:8px;align-items:center;width:100%;text-align:left;font:inherit;color:var(--ink);
+  background:none;border:0;border-top:1px solid var(--line);padding:10px 0;min-height:56px;cursor:pointer}
+.wkrow.today .d{color:var(--accent);font-weight:700}
+.marks{display:flex;gap:6px;align-items:center;font-size:13px;white-space:nowrap}
+.pill{font-size:12px;padding:2px 8px;border-radius:99px;background:var(--chip);color:var(--muted)}
+.pill.done{background:var(--good);color:var(--card)} .pill.skip{background:var(--chip);color:var(--bad)}
+table{border-collapse:collapse;width:100%;font-size:14px}
+td,th{text-align:left;padding:6px 8px 6px 0;border-top:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-weight:600;border-top:0}
+.bars{display:flex;align-items:flex-end;gap:3px;height:70px;margin:8px 0}
+.bars i{flex:1;background:var(--accent);border-radius:3px 3px 0 0;min-height:2px;opacity:.85}
+.bars i.none{background:var(--line)} .bars i.hi{background:var(--bad)}
+details summary{cursor:pointer;min-height:44px;display:flex;align-items:center;font-weight:600}
+@media (min-width:700px){ .cols{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start} .cols .card{margin:0 0 12px} }
+</style>
+</head>
+<body>
+<header>
+  <h1>4th Quarter Ready</h1>
+  <span id="syncStatus"></span>
+  <button class="btn" id="acctBtn" hidden>Sign in</button>
+</header>
+<main id="view"></main>
+
+<div id="restBar" hidden>
+  <span class="small">Rest</span><b id="restLeft">0:45</b>
+  <button class="btn" data-act="rest-add">+15 s</button>
+  <button class="btn" data-act="rest-stop">Stop</button>
+</div>
+
+<nav id="tabs">
+  <button data-tab="today"><span>●</span>Today</button>
+  <button data-tab="week"><span>▦</span>Week</button>
+  <button data-tab="physio"><span>✚</span>Physio core</button>
+  <button data-tab="log"><span>↗</span>Progress</button>
+</nav>
+
+<dialog id="acctDlg"><div id="acctBody"></div><div class="dlg-row"><button class="btn" data-close>Close</button></div></dialog>
+<dialog id="infoDlg"><div id="infoBody"></div><div class="dlg-row"><button class="btn" data-close>Close</button></div></dialog>
+<dialog id="askDlg"><p id="askMsg"></p><div class="dlg-row"><button class="btn primary" id="askYes">Yes</button><button class="btn" id="askNo">No</button></div></dialog>
+<dialog id="ivDlg">
+  <div id="ivPhase">Interval timer</div>
+  <div id="ivBig">–</div>
+  <p class="small" id="ivRound" style="text-align:center"></p>
+  <div class="row" id="ivCfg">
+    <label class="small">Hard s<input class="tiny" id="ivWork" type="number" min="1" inputmode="numeric"></label>
+    <label class="small">Easy s<input class="tiny" id="ivRest" type="number" min="0" inputmode="numeric"></label>
+    <label class="small">Rounds<input class="tiny" id="ivRounds" type="number" min="1" inputmode="numeric"></label>
+  </div>
+  <div class="dlg-row"><button class="btn primary" id="ivStart">Start</button><button class="btn" id="ivStop">Stop</button><button class="btn" data-close>Close</button></div>
+</dialog>
+
+<script src="firebase-config.js"></script>
+<script>
+/* =====================================================================================
+   PLAN DATA — edit this object to change the training plan. The logic below only reads it.
+
+   blocks : the block library (like the top of the old spreadsheets).
+            item fields: reps, name, how (one-line explanation), achilles (minimum Achilles step, 1–4),
+            fallback (shown while your Achilles step is lower), intense (dropped in the light version),
+            physioCheck (flagged on the Physio core screen as a possible clash).
+            block fields: load (shows a "kg used" box), intense + lightAlt (block swapped in the light version),
+            interval {work, rest, rounds} (adds an interval-timer button), test (shows the max-test inputs).
+   weeks  : the week grid. Each day lists blocks with the number of sets (the "O O O" circles).
+            Days not listed are off days. type: 'game' | 'recovery'. optional: true = optional third session.
+   After the last week the app repeats weeks from `repeatFrom` until you add more weeks.
+   ===================================================================================== */
+const PLAN = {
+  startDate: '2026-11-16',            // Monday of week 1
+  repeatFrom: 5,                      // after the last week, cycle weeks 5…8
+  restSeconds: 45,
+  baseline: 'Starting level (self-reported, Nov 2026): 2 strict pull-ups, 15–20 push-ups.',
+  yoga: { label: 'Open Down Dog', link: 'https://www.downdogapp.com/', routine: ['offDay', 'mobility'] },
+  achillesSteps: {
+    1: 'Isometric calf holds and slow two-leg calf raises. Marching drills only.',
+    2: 'Loaded raises (straight and bent knee), single-leg eccentric lowers, low A-skips, accelerations at 70%.',
+    3: 'Single-leg raises, accelerations at 75–80%, 5-4-5 shuttle steps, treadmill intervals.',
+    4: 'Low pogo hops and harder accelerations. Only when the Achilles has been calm for weeks.',
+  },
+  blocks: {
+    warmup: { name: 'Warmup', items: [
+      { reps: '10', name: 'Neck side to side' }, { reps: '5+5', name: 'Neck circles' }, { reps: '10', name: 'Shoulder turns' },
+      { reps: '10', name: 'Wrists & forearms' }, { reps: '10', name: 'Broomsticks' }, { reps: '8', name: '90/90 hips' },
+      { reps: '10', name: 'Thoracic rots.' }, { reps: '15/side', name: 'Leg swings' }, { reps: '10', name: 'Bodyweight squats' },
+      { reps: '30s', name: 'Down Dog to Cobra' } ] },
+    calf1: { name: 'Calf & Achilles 1', items: [
+      { reps: '45s', name: 'Isometric calf hold', how: 'Stand on the balls of both feet at mid-height and hold still; calms and loads the tendon.' },
+      { reps: '10', name: 'Slow calf raise, two legs', how: '3 s up, 3 s down, full range on flat floor.' } ] },
+    calf2: { name: 'Calf & Achilles 2', load: true, items: [
+      { reps: '10', name: 'Slow calf raise, straight knee', how: '3 s up, 1 s pause, 3 s down. Hold a kettlebell once it feels easy.' },
+      { reps: '10', name: 'Bent-knee calf raise', how: 'Same raise with knees bent about 30°, which targets the deeper soleus muscle.' },
+      { reps: '30s', name: 'Isometric calf hold' } ] },
+    calf3: { name: 'Calf & Achilles 3', load: true, items: [
+      { reps: '12', name: 'Calf raise holding KB, straight knee', achilles: 2, fallback: 'Slow calf raise, bodyweight' },
+      { reps: '12', name: 'Bent-knee calf raise holding KB', achilles: 2, fallback: 'Bent-knee calf raise, bodyweight' },
+      { reps: '6/side', name: 'Eccentric calf lower', how: 'Up on two feet, lower slowly (4 s) on one.', achilles: 2, fallback: 'Slow calf raise, two legs' } ] },
+    calf4: { name: 'Calf & Achilles 4', load: true, items: [
+      { reps: '8/side', name: 'Single-leg calf raise', how: 'Slow and full range; hold the 12 kg in the same-side hand when 8 feels easy.', achilles: 3, fallback: 'Calf raise holding 12 kg, two legs' },
+      { reps: '12', name: 'Bent-knee calf raise holding 12 kg', achilles: 2, fallback: 'Bent-knee calf raise, bodyweight' },
+      { reps: '8/side', name: 'Eccentric calf lower', achilles: 2, fallback: 'Slow calf raise, two legs' } ] },
+    calfIso: { name: 'Calf isometrics', items: [
+      { reps: '30–45s', name: 'Isometric calf hold', how: 'Mid-height, both feet. Safe two days before a game.' } ] },
+    kbStr: { name: 'KB Str. Basics', load: true, items: [
+      { reps: '12–14', name: '2H Swings' }, { reps: '10–12', name: 'Goblet Squats' }, { reps: '10–12', name: 'RDL' }, { reps: '10–12', name: 'Bent-Over Row' } ] },
+    kbStrSingles: { name: 'KB Str. Singles', load: true, items: [
+      { reps: '10/side', name: '1H Swing' }, { reps: '8/side', name: 'Split Squat holding KB' },
+      { reps: '8/side', name: 'Single-leg RDL', how: 'Hinge on one leg, bell in the opposite hand, back flat.' }, { reps: '8/side', name: '1-arm Bent-over Row' } ] },
+    kbStrTempo: { name: 'KB Str. Tempo', load: true, items: [
+      { reps: '14', name: '2H Swings' }, { reps: '8', name: 'Goblet Squat, 3 s down + 1 s pause' },
+      { reps: '8', name: 'RDL, 3 s down' }, { reps: '8/side', name: '1-arm Row, 2 s pause at the top' } ] },
+    kbFlow1: { name: 'KB Flow 1', load: true, items: [ { reps: '8–10/side', name: 'Swing, Clean, Press, 1H Squat' } ] },
+    kbArms: { name: 'KB Arms & Core', load: true, items: [
+      { reps: '12', name: 'Curl, Halo, Pullover' }, { reps: '10–12', name: 'Floor Press' } ] },
+    mbA: { name: 'MB Complex A', load: true, items: [
+      { reps: '6+6', name: 'Mace 360s', physioCheck: 'loaded rotation overhead' }, { reps: '10+10', name: 'Uppercuts' },
+      { reps: '10+10', name: 'Mace Split Squat' }, { reps: '10+10', name: 'Ying Yang' } ] },
+    mbB: { name: 'MB Complex B', load: true, items: [
+      { reps: '10+10', name: 'Mace 300s' }, { reps: '10+10', name: 'Lateral Lunge' }, { reps: '5+5', name: 'Lunge Chop & Swing' },
+      { reps: '10+10', name: 'Grave Digger', physioCheck: 'loaded rotation with a bent back' } ] },
+    bodyweight: { name: 'Bodyweight', items: [
+      { reps: '12', name: 'Split Squat' }, { reps: '12', name: 'Single Leg Hip Bridge' }, { reps: '12', name: 'Push-ups' }, { reps: '8', name: 'TRX Rows' } ] },
+    coreCarry: { name: 'Core & Carry', load: true, items: [
+      { reps: '3/side', name: 'Suitcase Carry' }, { reps: '10/side', name: 'Dead bug' }, { reps: '30s/side', name: 'Side Plank' } ] },
+    coreCarry2: { name: 'Core & Carry 2', load: true, items: [
+      { reps: '3/side', name: 'Suitcase Carry' }, { reps: '12/side', name: 'Dead bug' }, { reps: '30s/side', name: 'Side Plank' },
+      { reps: '20s/side', name: 'KB press-out hold', how: 'Half-kneeling, hold the bell at arm’s length in front of the chest; a Pallof-style anti-rotation hold.' } ] },
+    pullPrep1: { name: 'Pull-Up Prep 1', items: [
+      { reps: '15–20s', name: 'Dead Hang' }, { reps: '4–5', name: 'Scapular Pull-ups' }, { reps: '2–3', name: 'Negative Pull-ups', how: 'Jump or step to the top, lower for 5 s.' } ] },
+    pullPrep2: { name: 'Pull-Up Prep 2', items: [
+      { reps: '15–20s', name: 'Dead Hang' }, { reps: '3–5', name: 'Assisted Pull-ups' }, { reps: '8–12', name: 'Push-ups' } ] },
+    pullPrep3: { name: 'Pull-Up Prep 3', items: [
+      { reps: '1–2', name: 'Strict pull-ups' }, { reps: '3', name: 'Negative Pull-ups' }, { reps: '4–6', name: 'Assisted pull-ups, full range' } ] },
+    move1: { name: 'Movement Prep', items: [
+      { reps: '10 m', name: 'Marching A', how: 'Walk tall, knee up to hip height, land softly on the mid-foot. On the spot if space is short.' },
+      { reps: '10 m', name: 'Backward walk, long steps' },
+      { reps: '5 m ↔', name: 'Lateral shuffle, walk-through', how: 'Low hips, slow steps out and back; rehearses the shuffle without impact.' },
+      { reps: '4/side', name: 'Step and stick', how: 'One quick step forward, then hold the landing still for 2 s.' } ] },
+    move2: { name: 'Accel & COD 1', intense: true, lightAlt: 'move1', items: [
+      { reps: '10 m', name: 'Low A-skips', how: 'Small, quiet skips, barely leaving the floor.', achilles: 2, fallback: 'Marching A' },
+      { reps: '10 m', name: 'Acceleration at 70%, walk back', how: 'No space? 5 m out and back, or treadmill: build for 15 s to a fast jog.', achilles: 2, fallback: 'Brisk walk, 10 m' },
+      { reps: '5 m ↔', name: 'Lateral shuffle, low' }, { reps: '10 m', name: 'Backpedal, easy' } ] },
+    move3: { name: 'Accel & COD 2', intense: true, lightAlt: 'move1', items: [
+      { reps: '10 m', name: 'Acceleration at 70–75%, walk back', achilles: 2, fallback: 'Brisk walk, 10 m' },
+      { reps: '2/side', name: 'Shuffle-to-stop', how: 'Three lateral shuffles, then stick the stop for 2 s; deceleration practice.' },
+      { reps: '10 m', name: 'Backpedal, then turn and jog' } ] },
+    move4: { name: 'Accel & COD 3', intense: true, lightAlt: 'move1', items: [
+      { reps: '10–15 m', name: 'Acceleration at 75–80%, walk back', achilles: 3, fallback: 'Acceleration at 70%, 10 m' },
+      { reps: '1', name: '5-4-5 shuttle steps', how: 'Your old 5-4-5 pattern as short floor shuttles: 5 steps out, plant, 4 back, plant, 5 out.', achilles: 3, fallback: 'Shuffle-to-stop, 2/side' },
+      { reps: '10 m', name: 'Backpedal, then turn and jog' } ] },
+    pogo: { name: 'Low hops', intense: true, items: [
+      { reps: '10', name: 'Low pogo hops', how: 'Tiny two-foot hops, stiff ankles, quiet landings. Stop at any Achilles pain.', achilles: 4, fallback: 'Low A-skips, 10 m' } ] },
+    intervals6: { name: 'Treadmill intervals', intense: true, interval: { work: 30, rest: 60, rounds: 6 }, items: [
+      { reps: '5 min', name: 'Easy jog warm-up' },
+      { reps: '6×', name: '30 s hard / 60 s easy', how: 'Hard: heart rate 150–165. Easy: back to 120–130. Raise speed moderately, no all-out sprints on the belt.', achilles: 3, fallback: 'Brisk incline walk: 30 s fast / 60 s easy' } ] },
+    intervals8: { name: 'Treadmill intervals', intense: true, interval: { work: 30, rest: 60, rounds: 8 }, items: [
+      { reps: '5 min', name: 'Easy jog warm-up' },
+      { reps: '8×', name: '30 s hard / 60 s easy', how: 'Hard: heart rate 150–165. Easy: back to 120–130.', achilles: 3, fallback: 'Brisk incline walk: 30 s fast / 60 s easy' } ] },
+    animalFlow: { name: 'Animal Flow', items: [ { reps: '2+2', name: '🐻 → 🐶 → Kick → 🐵 → 🦀' } ] },
+    maxTest: { name: 'Max test', test: true, items: [
+      { reps: 'max', name: 'Strict pull-ups', how: 'One set, full hang to chin over the bar. Rest 3 minutes afterwards.' },
+      { reps: 'max', name: 'Push-ups', how: 'One set, chest to fist height, stop when form breaks.' } ] },
+    mobility: { name: 'Mobility', items: [
+      { reps: '10+10', name: 'Ankle CARs' }, { reps: '30s', name: 'Calf wall stretch, straight', how: 'Gentle; never push into Achilles pain.' },
+      { reps: '30s', name: 'Calf wall stretch, bent' }, { reps: '30s', name: 'Hamstring stretch' },
+      { reps: '10', name: 'Knee → wall dorsiflexion' }, { reps: '30s', name: 'Single leg balance' }, { reps: '30s', name: 'Deep squat' } ] },
+    offDay: { name: 'Off-Days', items: [
+      { reps: '10 min', name: 'Yoga (Down Dog): hips, hamstrings, ankles/calves, back' }, { reps: '2', name: 'Rolls (front/back)' },
+      { reps: '10', name: 'Standing Front Kicks' }, { reps: '5', name: 'Table Tap to Compr. Slide' },
+      { reps: '10', name: 'Wrists 4 directions' }, { reps: '5', name: 'Floor Get-Ups' } ] },
+    // Kept out of the weeks on purpose (see Physio core screen); add them back only after asking your physio.
+    parked: { name: 'Parked exercises', items: [
+      { reps: '4', name: 'Turkish Get-Up', physioCheck: 'long loaded lever through the trunk' },
+      { reps: '30s', name: 'Superman variations', physioCheck: 'repeated low-back extension' } ] },
+  },
+  weeks: [
+    { n: 1, title: 'Re-entry', purpose: 'Get moving again without digging a hole: easy loads, short sessions, stop well before tired.', achillesStep: 1, days: {
+      tue: { title: 'Lower body & strength (easy)', minutes: 20, blocks: [
+        { block: 'warmup', sets: 1 }, { block: 'calf1', sets: 2 }, { block: 'kbStr', sets: 2, note: '8 kg, low end of the reps' },
+        { block: 'coreCarry', sets: 1, note: '8 kg carry' }, { block: 'mobility', sets: 1 } ] },
+      thu: { title: 'Movement quality (easy)', minutes: 20, blocks: [
+        { block: 'warmup', sets: 1 }, { block: 'calfIso', sets: 2 }, { block: 'move1', sets: 2 },
+        { block: 'mbA', sets: 2, note: '4 kg, smooth' }, { block: 'pullPrep1', sets: 2 } ] },
+      sat: { type: 'game' }, sun: { type: 'recovery' } } },
+    { n: 2, title: 'Base, about 60%', purpose: 'Rebuild the routine at about 60% of the old volume and start gentle accelerations.', achillesStep: 2, days: {
+      mon: { title: 'Short strength (optional)', minutes: 15, optional: true, blocks: [ { block: 'bodyweight', sets: 2 }, { block: 'pullPrep2', sets: 2 } ] },
+      tue: { title: 'Lower body & strength', minutes: 30, blocks: [
+        { block: 'warmup', sets: 1 }, { block: 'calf2', sets: 3 }, { block: 'kbStr', sets: 3, note: '8–12 kg' },
+        { block: 'kbFlow1', sets: 2, note: '8 kg' }, { block: 'coreCarry', sets: 2, note: '12 kg carry' } ] },
+      thu: { title: 'Movement quality', minutes: 30, blocks: [
+        { block: 'warmup', sets: 1 }, { block: 'calfIso', sets: 2 }, { block: 'move2', sets: 4, note: '4 accelerations at 70%' },
+        { block: 'mbA', sets: 2, note: '4–6 kg' }, { block: 'pullPrep1', sets: 3 } ] },
+      sat: { type: 'game' }, sun: { type: 'recovery' } } },
+    { n: 3, title: 'Base, about 70%', purpose: 'Same shape, a little more: 12 kg on the basics and the first single-leg calf lowers.', achillesStep: 2, days: {
+      mon: { title: 'Short strength (optional)', minutes: 15, optional: true, blocks: [ { block: 'bodyweight', sets: 3 }, { block: 'pullPrep2', sets: 2 } ] },
+      tue: { title: 'Lower body & strength', minutes: 30, blocks: [
+        { block: 'warmup', sets: 1 }, { block: 'calf3', sets: 3 }, { block: 'kbStr', sets: 3, note: '12 kg' },
+        { block: 'kbFlow1', sets: 2, note: '8–12 kg' }, { block: 'coreCarry', sets: 2, note: '12 kg carry' } ] },
+      thu: { title: 'Movement quality', minutes: 30, blocks: [
+        { block: 'warmup', sets: 1 }, { block: 'calfIso', sets: 2 }, { block: 'move3', sets: 5, note: '5 accelerations at 70–75%' },
+        { block: 'mbA', sets: 3, note: '6 kg' }, { block: 'pullPrep1', sets: 3 } ] },
+      sat: { type: 'game' }, sun: { type: 'recovery' } } },
+    { n: 4, title: 'Wave 1 · week 1, about 80%', purpose: 'Start building: single-arm and single-leg kettlebell work, sharper accelerations, first max test.', achillesStep: 3, days: {
+      mon: { title: 'Short strength (optional)', minutes: 15, optional: true, blocks: [ { block: 'bodyweight', sets: 3 }, { block: 'pullPrep2', sets: 3 } ] },
+      tue: { title: 'Lower body & strength', minutes: 30, blocks: [
+        { block: 'warmup', sets: 1 }, { block: 'calf4', sets: 3 }, { block: 'kbStrSingles', sets: 3, note: '12 kg' },
+        { block: 'kbFlow1', sets: 3, note: '12 kg' }, { block: 'coreCarry2', sets: 2 } ] },
+      thu: { title: 'Movement quality + max test', minutes: 30, blocks: [
+        { block: 'warmup', sets: 1 }, { block: 'calfIso', sets: 2 }, { block: 'move4', sets: 6, note: '6 accelerations at 75–80%' },
+        { block: 'mbB', sets: 3, note: '6 kg' }, { block: 'maxTest', sets: 1 } ] },
+      sat: { type: 'game' }, sun: { type: 'recovery' } } },
+    // ---- Weeks 5–8: outline. Provisional grids; adjust after the week-4 test. ----
+    { n: 5, title: 'Wave 1 · week 2, about 90%', purpose: 'More time under tension: tempo squats and RDLs, first strict pull-up singles.', outline: true, achillesStep: 3, days: {
+      mon: { title: 'Short strength (optional)', minutes: 15, optional: true, blocks: [ { block: 'bodyweight', sets: 3 }, { block: 'pullPrep3', sets: 3 } ] },
+      tue: { title: 'Lower body & strength', minutes: 30, blocks: [
+        { block: 'warmup', sets: 1 }, { block: 'calf4', sets: 3 }, { block: 'kbStrTempo', sets: 3, note: '12 kg' },
+        { block: 'kbArms', sets: 2 }, { block: 'coreCarry2', sets: 2 } ] },
+      thu: { title: 'Movement quality', minutes: 30, blocks: [
+        { block: 'warmup', sets: 1 }, { block: 'calfIso', sets: 2 }, { block: 'move4', sets: 6 },
+        { block: 'mbA', sets: 3 }, { block: 'mbB', sets: 2 }, { block: 'pullPrep2', sets: 3 } ] },
+      sat: { type: 'game' }, sun: { type: 'recovery' } } },
+    { n: 6, title: 'Wave 1 · week 3, old volume', purpose: 'Peak of the wave at your old volume, plus the first heart-rate intervals.', outline: true, achillesStep: 3, days: {
+      mon: { title: 'Intervals + pull-ups (optional)', minutes: 20, optional: true, blocks: [ { block: 'intervals6', sets: 1 }, { block: 'pullPrep3', sets: 3 } ] },
+      tue: { title: 'Lower body & strength', minutes: 35, blocks: [
+        { block: 'warmup', sets: 1 }, { block: 'calf4', sets: 3 }, { block: 'kbStrSingles', sets: 4, note: '12 kg' },
+        { block: 'kbFlow1', sets: 3, note: '12 kg' }, { block: 'coreCarry2', sets: 3 } ] },
+      thu: { title: 'Movement quality', minutes: 30, blocks: [
+        { block: 'warmup', sets: 1 }, { block: 'move4', sets: 6 }, { block: 'mbA', sets: 3 }, { block: 'mbB', sets: 3 }, { block: 'pullPrep1', sets: 3 } ] },
+      sat: { type: 'game' }, sun: { type: 'recovery' } } },
+    { n: 7, title: 'Lighter week, about 60%', purpose: 'Absorb the wave: fewer sets, nothing hard, arrive fresh for the next block.', outline: true, achillesStep: 3, days: {
+      mon: { title: 'Pull-ups + mobility (optional)', minutes: 15, optional: true, blocks: [ { block: 'pullPrep3', sets: 2 }, { block: 'mobility', sets: 1 } ] },
+      tue: { title: 'Lower body & strength (light)', minutes: 25, blocks: [
+        { block: 'warmup', sets: 1 }, { block: 'calf4', sets: 2 }, { block: 'kbStr', sets: 2, note: '12 kg' }, { block: 'coreCarry', sets: 2 }, { block: 'mobility', sets: 1 } ] },
+      thu: { title: 'Movement quality (light)', minutes: 25, blocks: [
+        { block: 'warmup', sets: 1 }, { block: 'calfIso', sets: 2 }, { block: 'move3', sets: 4 }, { block: 'mbA', sets: 2 }, { block: 'animalFlow', sets: 2 } ] },
+      sat: { type: 'game' }, sun: { type: 'recovery' } } },
+    { n: 8, title: 'Wave 2 · week 1', purpose: 'Next wave begins: low hops if the Achilles is calm, longer intervals, second max test.', outline: true, achillesStep: 4, days: {
+      mon: { title: 'Intervals + pull-ups (optional)', minutes: 25, optional: true, blocks: [ { block: 'intervals8', sets: 1 }, { block: 'pullPrep3', sets: 3 } ] },
+      tue: { title: 'Lower body & strength', minutes: 30, blocks: [
+        { block: 'warmup', sets: 1 }, { block: 'calf4', sets: 3 }, { block: 'kbStrTempo', sets: 3, note: '12 kg' },
+        { block: 'kbFlow1', sets: 3, note: '12 kg' }, { block: 'coreCarry2', sets: 2 } ] },
+      thu: { title: 'Movement quality + max test', minutes: 30, blocks: [
+        { block: 'warmup', sets: 1 }, { block: 'calfIso', sets: 2 }, { block: 'pogo', sets: 2 }, { block: 'move4', sets: 6 },
+        { block: 'mbB', sets: 3 }, { block: 'maxTest', sets: 1 } ] },
+      sat: { type: 'game' }, sun: { type: 'recovery' } } },
+  ],
+};
+/* ============================== end of plan data ============================== */
+
+/* ---------- helpers ---------- */
+const $ = (s, r = document) => r.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+const pad = n => String(n).padStart(2, '0');
+const iso = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const parseDate = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+const addDays = (s, n) => { const d = parseDate(s); d.setDate(d.getDate() + n); return iso(d); };
+const mondayOf = s => addDays(s, -((parseDate(s).getDay() + 6) % 7));
+const DAYKEYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+const dayKey = s => DAYKEYS[(parseDate(s).getDay() + 6) % 7];
+const fmtDate = (s, long) => parseDate(s).toLocaleDateString('en-GB', long ? { weekday:'long', day:'numeric', month:'long' } : { weekday:'short', day:'numeric', month:'short' });
+const fmtStamp = t => t ? new Date(t).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' }) : '';
+// ?date=YYYY-MM-DD pretends it is another day (for trying out the plan before it starts).
+const todayIso = () => { const q = new URLSearchParams(location.search).get('date'); return /^\d{4}-\d\d-\d\d$/.test(q || '') ? q : iso(new Date()); };
+
+/* ---------- local storage ---------- */
+const LS = 'workout.';
+const load = (k, d) => { try { const v = localStorage.getItem(LS + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } };
+const store = (k, v) => { try { localStorage.setItem(LS + k, JSON.stringify(v)); } catch (e) {} };
+const unstore = k => { try { localStorage.removeItem(LS + k); } catch (e) {} };
+
+const emptyData = () => ({ v: 1, sessions: {}, core: {}, yoga: {}, pain: {}, tests: {}, weekFlags: {}, achilles: { step: 1, t: 0 }, physio: { current: null, archive: [] } });
+const normalize = d => { const e = emptyData(); d = d || {}; return { ...e, ...d, physio: { ...e.physio, ...(d.physio || {}) }, achilles: d.achilles || e.achilles }; };
+const hasData = d => !!d && (['sessions', 'core', 'yoga', 'pain', 'tests', 'weekFlags'].some(k => Object.keys(d[k] || {}).length) || !!(d.physio && d.physio.current));
+
+/* ================= Progress storage =================
+   Signed out: everything lives in this browser (localStorage, key workout.data).
+   Signed in: the data lives in the private cloud document workouts/{uid}; the Firebase module at the end
+   of the page calls Workout.setAccount() with the loaded data plus load/save functions. A copy is kept in
+   this browser while signed in so the app still opens offline. Settings always stay on the device. */
+let data = normalize(load('data', null));
+const settings = Object.assign({ keepAwake: false, autoRest: true, sound: true, tab: 'today' }, load('settings', {}));
+const saveSettings = () => store('settings', settings);
+const account = { available: false, user: null, saveFn: null, loadFn: null, status: '', dirty: false, cloudLoaded: false };
+let saveTimer = null;
+
+/* Merge two data sets without losing anything: union by date/id; where both have the same entry, the newer one wins. */
+function mergeData(a, b) {
+  a = normalize(a); b = normalize(b);
+  const newer = (x, y) => !x ? y : !y ? x : ((y.t || 0) > (x.t || 0) ? y : x);
+  const mergeMap = (A, B) => { const o = { ...A }; for (const k in B) o[k] = newer(A[k], B[k]); return o; };
+  const out = { v: 1 };
+  ['sessions', 'core', 'yoga', 'pain', 'tests', 'weekFlags'].forEach(k => out[k] = mergeMap(a[k], b[k]));
+  out.achilles = newer(a.achilles, b.achilles);
+  // Physio lists: the newest "current" stays current, every other list ends up in the archive (once).
+  const cur = newer(a.physio.current, b.physio.current);
+  const byId = {};
+  [...a.physio.archive, ...b.physio.archive, a.physio.current, b.physio.current].forEach(l => {
+    if (l && (!cur || l.id !== cur.id) && !byId[l.id]) byId[l.id] = { ...l, archivedAt: l.archivedAt || Date.now() };
+  });
+  out.physio = { current: cur || null, archive: Object.values(byId).sort((x, y) => (y.t || 0) - (x.t || 0)) };
+  return out;
+}
+
+function persist() {
+  if (account.user) { store('cache.' + account.user.uid, data); account.dirty = true; queueSave(); }
+  else store('data', data);
+}
+function setSyncStatus(s) { account.status = s; renderAccount(); }
+function queueSave() { clearTimeout(saveTimer); setSyncStatus('Saving…'); saveTimer = setTimeout(flushSave, 1500); }
+async function flushSave() {
+  clearTimeout(saveTimer); saveTimer = null;
+  if (!account.user || !account.saveFn) return;
+  try {
+    // Read, merge, write: another device may have saved since this one loaded.
+    const remote = await account.loadFn();
+    const before = JSON.stringify(data);
+    data = mergeData(remote, data);
+    account.cloudLoaded = true;
+    await account.saveFn(JSON.parse(JSON.stringify(data)));
+    store('cache.' + account.user.uid, data);
+    account.dirty = false; setSyncStatus('All progress saved');
+    if (JSON.stringify(data) !== before) render();
+  } catch (e) { console.warn('Save failed', e); setSyncStatus('Couldn’t save — check your connection'); }
+}
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden && saveTimer) flushSave();
+  if (!document.hidden) { if (account.user && account.dirty && !saveTimer) flushSave(); wakeLockSync(); render(); }
+});
+window.addEventListener('online', () => { if (account.user && account.dirty) flushSave(); });
+
+async function setAccount(user, cloudData, saveFn, loadFn, loadedOk) {
+  clearTimeout(saveTimer); saveTimer = null;
+  if (user) {
+    const cache = load('cache.' + user.uid, null);
+    Object.assign(account, { user, saveFn, loadFn, cloudLoaded: !!loadedOk, dirty: false, status: loadedOk ? 'All progress saved' : 'Offline — changes are kept on this device' });
+    data = mergeData(cloudData, cache);
+    if (cache && JSON.stringify(mergeData(cloudData, null)) !== JSON.stringify(data)) account.dirty = true;
+    render();
+    // Progress made in this browser before signing in: offer (once per account) to merge it into the account.
+    const guest = load('data', null);
+    if (hasData(guest) && !load('guestAsked.' + user.uid, false)) {
+      store('guestAsked.' + user.uid, true);
+      if (await ask(`Merge the progress saved in this browser into ${user.name}'s account? Nothing is overwritten: sessions, ticks, pain scores and physio lists are combined.`, 'Merge', 'Not now')) {
+        data = mergeData(data, guest); unstore('data'); account.dirty = true;
+      }
+    }
+    store('cache.' + user.uid, data);
+    if (account.dirty) queueSave();
+  } else {
+    if (account.user) unstore('cache.' + account.user.uid);
+    Object.assign(account, { user: null, saveFn: null, loadFn: null, status: '', dirty: false, cloudLoaded: false });
+    data = normalize(load('data', null));
+  }
+  render(); renderAccount();
+}
+
+/* ---------- small custom confirm (native confirm() is unreliable in installed PWAs) ---------- */
+function ask(msg, yes = 'Yes', no = 'Cancel') {
+  return new Promise(res => {
+    const d = $('#askDlg'); $('#askMsg').textContent = msg; $('#askYes').textContent = yes; $('#askNo').textContent = no;
+    const done = v => { d.close(); $('#askYes').onclick = $('#askNo').onclick = d.oncancel = null; res(v); };
+    $('#askYes').onclick = () => done(true); $('#askNo').onclick = () => done(false); d.oncancel = e => { e.preventDefault(); done(false); };
+    d.showModal();
+  });
+}
+function info(html) { $('#infoBody').innerHTML = html; $('#infoDlg').showModal(); }
+document.addEventListener('click', e => { const b = e.target.closest('[data-close]'); if (b) b.closest('dialog').close(); });
+
+/* ================= Plan lookups ================= */
+function weekInfo(dateIso) {
+  const mon = mondayOf(dateIso);
+  const diff = Math.round((parseDate(mon) - parseDate(mondayOf(PLAN.startDate))) / 6048e5);
+  if (diff < 0) return { id: mon, n: diff + 1, pre: true, week: null };
+  let idx = diff, repeatOf = null;
+  if (idx >= PLAN.weeks.length) {
+    const from = Math.min(Math.max((PLAN.repeatFrom || 1) - 1, 0), PLAN.weeks.length - 1), len = PLAN.weeks.length - from;
+    idx = from + ((diff - from) % len); repeatOf = PLAN.weeks[idx].n;
+  }
+  return { id: mon, n: diff + 1, week: PLAN.weeks[idx], repeatOf, light: !!(data.weekFlags[mon] && data.weekFlags[mon].light) };
+}
+function dayInfo(dateIso) {
+  const wi = weekInfo(dateIso);
+  const day = (wi.week && wi.week.days[dayKey(dateIso)]) || { type: 'off' };
+  const type = day.blocks ? 'session' : (day.type || 'off');
+  return { wi, day, type };
+}
+const achStep = () => Math.min(4, Math.max(1, (data.achilles && data.achilles.step) || 1));
+/* The blocks to show for a session: full or light version, with Achilles-gated drills swapped for their fallback. */
+function sessionBlocks(day, light) {
+  const step = achStep(), out = [];
+  day.blocks.forEach((entry, i) => {
+    let id = entry.block, lib = PLAN.blocks[id], swapped = false;
+    if (!lib) return;
+    if (light && lib.intense) { if (!lib.lightAlt || !PLAN.blocks[lib.lightAlt]) return; id = lib.lightAlt; lib = PLAN.blocks[id]; swapped = true; }
+    const sets = light ? Math.max(1, Math.ceil(entry.sets / 2)) : entry.sets;
+    const items = lib.items.filter(it => !(light && it.intense)).map(it => {
+      const gated = it.achilles && step < it.achilles;
+      return gated ? { ...it, name: it.fallback || it.name, how: `Easier version while your Achilles step is ${step} (plan drill: ${it.name}, step ${it.achilles}).`, gated: true } : it;
+    });
+    out.push({ i, id, lib, sets, items, note: swapped ? 'Light version: no accelerations' : entry.note });
+  });
+  return out;
+}
+
+/* ================= State changes ================= */
+let viewDate = todayIso();
+const now = () => Date.now();
+function sess(date, create) {
+  let s = data.sessions[date];
+  if (!s && create) s = data.sessions[date] = { ticks: {}, weights: {}, notes: '', t: now() };
+  return s;
+}
+function touchSession(date, fn) { const s = sess(date, true); fn(s); s.t = now(); persist(); }
+const coreOf = date => data.core[date] || { rounds: 0, checked: [] };
+function setCore(date, fn) { const c = { ...coreOf(date) }; c.checked = [...(c.checked || [])]; fn(c); c.t = now(); data.core[date] = c; persist(); }
+function setPain(date, field, v) {
+  const p = { ...(data.pain[date] || {}) };
+  if (p[field] === v) delete p[field]; else p[field] = v;
+  p.t = now(); data.pain[date] = p; persist();
+}
+/* Achilles advice for one day: above 3/10, or the morning score is worse than the morning before. */
+function painAdvice(date) {
+  const flagged = d => {
+    const p = data.pain[d]; if (!p) return null;
+    const vals = ['morning', 'pre', 'post'].map(k => p[k]).filter(v => v != null);
+    if (!vals.length) return null;
+    const y = data.pain[addDays(d, -1)];
+    const why = [];
+    if (Math.max(...vals) > 3) why.push('a score above 3/10');
+    if (p.morning != null && y && y.morning != null && p.morning > y.morning) why.push('this morning is worse than yesterday morning');
+    return why;
+  };
+  const today = flagged(date); if (!today || !today.length) return null;
+  const y = flagged(addDays(date, -1));
+  return { why: today, physio: !!(y && y.length) || Math.max(...['morning', 'pre', 'post'].map(k => (data.pain[date] || {})[k] ?? 0)) > 5 };
+}
+
+/* Google Keep paste → one exercise per non-empty line, checkbox and bullet characters stripped, text otherwise untouched. */
+function parseKeep(text) {
+  return String(text).split(/\r?\n/)
+    .map(l => l.replace(/^[\s​﻿]*(?:[-*•·‣▪◦–—]\s+)?(?:\[[ xX✓✔]?\]|[☐☑☒✓✔□■▢◻◼⬜✅])?\s*/u, '').trim())
+    .filter(Boolean);
+}
+function replacePhysio(lines) {
+  const t = now(), ph = data.physio;
+  if (ph.current) ph.archive = [{ ...ph.current, archivedAt: t }, ...ph.archive];
+  ph.current = { id: 'p' + t, lines, t };
+  persist();
+}
+
+/* ================= Rendering ================= */
+const view = $('#view');
+function render() {
+  document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === settings.tab));
+  view.innerHTML = ({ today: renderToday, week: renderWeek, physio: renderPhysio, log: renderLog }[settings.tab] || renderToday)();
+}
+const scoreRow = (date, field, label) => {
+  const cur = (data.pain[date] || {})[field];
+  return `<div class="small muted" style="margin-top:8px">${label}</div><div class="scores">${Array.from({ length: 11 }, (_, n) =>
+    `<button class="score${cur === n ? ' on' : ''}" data-act="pain" data-field="${field}" data-v="${n}" aria-label="${label} ${n}">${n}</button>`).join('')}</div>`;
+};
+function blockHtml(b, s, editable) {
+  const done = (s && s.ticks && s.ticks[b.i]) || 0;
+  const circles = Array.from({ length: b.sets }, (_, k) =>
+    `<button class="circle${k < done ? ' on' : ''}" ${editable ? `data-act="tick" data-i="${b.i}" data-k="${k}"` : 'disabled'} aria-label="${esc(b.lib.name)} set ${k + 1}"></button>`).join('');
+  const test = b.lib.test ? (() => { const t = data.tests[viewDate] || {}; return `<div class="row" style="margin:8px 0">
+      <label class="small">Strict pull-ups<input class="short" type="number" min="0" inputmode="numeric" data-field="test-pullups" value="${t.pullups ?? ''}"></label>
+      <label class="small">Push-ups<input class="short" type="number" min="0" inputmode="numeric" data-field="test-pushups" value="${t.pushups ?? ''}"></label></div>`; })() : '';
+  return `<div class="block">
+    <div class="spread"><h3>${esc(b.lib.name)}${b.note ? ` <span class="tag">${esc(b.note)}</span>` : ''}</h3><span class="small muted">${b.sets > 1 ? b.sets + ' sets' : ''}</span></div>
+    ${b.items.map(it => `<div class="ex"><span class="reps">${esc(it.reps)}</span><span>${esc(it.name)}${it.gated ? ' <span class="tag w">easier version</span>' : ''}${it.physioCheck ? ' <span class="tag w">ask physio</span>' : ''}</span>${it.how ? `<span class="how">${esc(it.how)}</span>` : ''}</div>`).join('')}
+    ${test}
+    <div class="spread" style="margin:8px 0"><div class="circles">${circles}</div>
+      ${b.lib.load ? `<input class="short" placeholder="kg used" data-field="weight" data-i="${b.i}" value="${esc((s && s.weights && s.weights[b.i]) || '')}" aria-label="Weight used for ${esc(b.lib.name)}">` : ''}</div>
+    ${b.lib.interval ? `<button class="btn" data-act="interval" data-work="${b.lib.interval.work}" data-rest="${b.lib.interval.rest}" data-rounds="${b.lib.interval.rounds}">Interval timer: ${b.lib.interval.rounds} × ${b.lib.interval.work} s / ${b.lib.interval.rest} s</button>` : ''}
+  </div>`;
+}
+function sessionCard(date, di) {
+  const { day, wi } = di, s = sess(date);
+  const head = `<div class="spread"><h2>${esc(day.title)}</h2><span class="small muted">about ${day.minutes} min</span></div>`;
+  if (day.optional && wi.light) return `<div class="card">${head}<p class="muted">Dropped this week: with a midweek game or double-header the optional session is rest.</p></div>`;
+  const r = s && s.readiness;
+  const pick = `<p class="small muted" style="margin:4px 0">${day.optional ? 'Optional third session. ' : ''}Readiness check: how do you feel?</p>
+    <div class="seg">
+      <button class="btn${r === 'normal' ? ' on' : ''}" data-act="ready" data-v="normal">Normal</button>
+      <button class="btn${r === 'light' ? ' on' : ''}" data-act="ready" data-v="light">Tired / mild symptoms</button>
+      <button class="btn${r === 'unwell' ? ' on' : ''}" data-act="ready" data-v="unwell">Unwell</button>
+    </div>`;
+  if (!r) return `<div class="card">${head}${pick}${wi.light ? '<p class="note">Game week: the light version is planned.</p>' : ''}
+    <button class="linkish" data-act="skip">Skip this session</button>${s && s.status === 'skipped' ? ' <span class="pill skip">skipped</span>' : ''}</div>`;
+  if (r === 'unwell') return `<div class="card">${head}${pick}<div class="note"><b>Rest day.</b> Fever, body aches, chest symptoms or feeling properly unwell means no training.
+    Rest, drink, sleep. Restart with the light version once you have felt normal for a full day; after a fever, wait two to three days.</div></div>`;
+  const light = wi.light || r === 'light';
+  const blocks = sessionBlocks(day, light);
+  const wantStep = wi.week.achillesStep || 1, step = achStep();
+  const stepNote = wantStep > step ? `<div class="note">This week is written for Achilles step ${wantStep}; you are on step ${step}, so harder drills show an easier version.
+      If the Achilles has been calm for a week (3/10 or less, not worse the next morning): <button class="linkish" data-act="step" data-v="${step + 1}">move up to step ${step + 1}</button></div>` : '';
+  const done = s.status === 'done';
+  return `<div class="card">${head}${pick}
+    ${light ? `<div class="note"><b>Light version</b>: about half the sets, no accelerations or intervals.${wi.light ? ' (Game week.)' : ''}</div>` : ''}
+    ${stepNote}
+    ${blocks.map(b => blockHtml(b, s, true)).join('')}
+    <div class="block"><label class="small muted" for="notes">Notes</label><textarea id="notes" data-field="notes" style="min-height:64px" placeholder="How it went, weights, anything to remember">${esc(s.notes || '')}</textarea></div>
+    <div class="row" style="margin-top:10px">
+      <button class="btn primary" data-act="finish">${done ? '✓ Session done (tap to reopen)' : 'Finish session'}</button>
+      ${done ? '' : `<button class="btn" data-act="skip">${s.status === 'skipped' ? 'Skipped (tap to undo)' : 'Skip'}</button>`}
+    </div></div>`;
+}
+function achillesCard(date, type) {
+  const adv = painAdvice(date), step = achStep();
+  return `<div class="card"><div class="spread"><h2>Achilles</h2><span class="small muted">step ${step} of 4 · pain 0–10</span></div>
+    ${scoreRow(date, 'morning', 'This morning (first steps out of bed)')}
+    ${type === 'session' || type === 'game' ? scoreRow(date, 'pre', type === 'game' ? 'Before the game' : 'Before the session') + scoreRow(date, 'post', type === 'game' ? 'After the game' : 'After the session') : ''}
+    ${adv ? `<div class="note"><b>Drop back a step.</b> Reason: ${esc(adv.why.join(" and "))}.
+      ${step > 1 ? `<button class="linkish" data-act="step" data-v="${step - 1}">Go to step ${step - 1}</button>` : 'You are on step 1: keep to isometric holds and skip the other calf work today.'}
+      ${adv.physio ? '<br><b>Check with your physio</b>: two flagged days in a row, or pain above 5/10.' : ''}</div>` : ''}
+  </div>`;
+}
+function coreCard(date) {
+  const ph = data.physio.current, c = coreOf(date), mon = mondayOf(date);
+  const days = DAYKEYS.filter((_, i) => coreOf(addDays(mon, i)).rounds > 0).length;
+  const list = ph && ph.lines.length
+    ? ph.lines.map((l, i) => `<label class="check"><input type="checkbox" data-act="core-check" data-i="${i}" ${c.checked && c.checked.includes(i) ? 'checked' : ''}><span>${esc(l)}</span></label>`).join('')
+    : `<p class="muted small">No list yet. Paste your Google Keep note on the <button class="linkish" data-tab="physio">Physio core</button> screen.</p>`;
+  return `<div class="card"><div class="spread"><h2>Physio core</h2><span class="small muted">${days} of 7 days this week</span></div>
+    ${list}
+    <div class="row" style="margin-top:8px">
+      <button class="btn primary" data-act="core-round">+ Round done</button>
+      <span><b>${c.rounds}</b> ${c.rounds === 1 ? 'round' : 'rounds'} today</span>
+      ${c.rounds ? '<button class="linkish" data-act="core-undo">undo</button>' : ''}
+    </div></div>`;
+}
+function yogaCard(date, type) {
+  const y = data.yoga[date], done = !!(y && y.done);
+  return `<div class="card"><div class="spread"><h2>${type === 'recovery' ? 'Recovery: yoga / mobility' : 'Yoga / mobility'} <span class="small muted">(10–20 min)</span></h2><span class="tag">optional</span></div>
+    <p class="small muted" style="margin:4px 0">Hips, hamstrings, ankles/calves, back. A suggestion, never a requirement.</p>
+    <div class="row"><button class="btn${done ? ' on' : ''}" data-act="yoga">${done ? '✓ Done' : 'Done'}</button>
+      <button class="linkish" data-act="routine">Short routine</button>
+      <a href="${esc(PLAN.yoga.link)}" target="_blank" rel="noopener">${esc(PLAN.yoga.label)}</a></div></div>`;
+}
+function timersCard() {
+  return `<div class="card"><h2>Timers</h2>
+    <div class="row"><span class="small muted">Rest</span>${[30, 45, 60, 90].map(n => `<button class="btn" data-act="rest" data-v="${n}">${n} s</button>`).join('')}</div>
+    <div class="row" style="margin-top:8px"><button class="btn" data-act="interval" data-work="30" data-rest="60" data-rounds="6">Interval timer</button></div>
+    <label class="check"><input type="checkbox" data-act="set" data-k="autoRest" ${settings.autoRest ? 'checked' : ''}><span>Start the rest timer when I tick a set</span></label>
+    <label class="check"><input type="checkbox" data-act="set" data-k="keepAwake" ${settings.keepAwake ? 'checked' : ''}><span>Keep the screen awake${'wakeLock' in navigator ? '' : ' (not supported in this browser)'}</span></label>
+    <label class="check"><input type="checkbox" data-act="set" data-k="sound" ${settings.sound ? 'checked' : ''}><span>Beep when a timer ends</span></label></div>`;
+}
+function renderToday() {
+  const date = viewDate, di = dayInfo(date), { wi, type } = di, isToday = date === todayIso();
+  const wk = wi.pre
+    ? `<p class="muted" style="margin:2px 0 0">The plan starts on ${fmtDate(PLAN.startDate, true)}. Until then: rest up, physio core, optional yoga.</p>`
+    : `<p style="margin:2px 0 0"><b>Week ${wi.n}${wi.repeatOf ? ` (repeats week ${wi.repeatOf})` : ''} · ${esc(wi.week.title)}</b>${wi.light ? ' <span class="tag w">light: game week</span>' : ''}</p>
+       <p class="small muted" style="margin:2px 0 0">${esc(wi.week.purpose)}</p>`;
+  let main = '';
+  if (type === 'session') main = sessionCard(date, di);
+  else if (type === 'game') main = `<div class="card"><h2>Game day</h2><p class="muted" style="margin:0">No training. Warm up well before tip-off; log the Achilles before and after.</p></div>`;
+  const showYoga = type === 'off' || type === 'recovery';
+  return `<div class="card"><div class="spread"><h2>${isToday ? 'Today' : ''} ${fmtDate(date, true)}</h2>
+      <span class="row"><button class="btn" data-act="day" data-v="-1" aria-label="Previous day">‹</button><button class="btn" data-act="day" data-v="1" aria-label="Next day">›</button></span></div>
+      ${isToday ? '' : '<button class="linkish" data-act="day" data-v="0">Back to today</button>'}${wk}</div>
+    <div class="cols"><div>${main}${showYoga ? yogaCard(date, type) : ''}${type === 'session' ? timersCard() : ''}</div>
+    <div>${coreCard(date)}${achillesCard(date, type)}${type === 'session' ? '' : timersCard()}</div></div>`;
+}
+
+function dayStatus(date) {
+  const { type, day, wi } = dayInfo(date), s = data.sessions[date];
+  if (type !== 'session') return { label: type === 'game' ? 'Game' : type === 'recovery' ? 'Recovery / mobility' : 'Off', pill: '' };
+  let pill = '';
+  if (s && s.status === 'done') pill = '<span class="pill done">done</span>';
+  else if (s && s.status === 'skipped') pill = '<span class="pill skip">skipped</span>';
+  else if (s && s.readiness === 'unwell') pill = '<span class="pill skip">rest (unwell)</span>';
+  else if (day.optional && wi.light) pill = '<span class="pill">dropped</span>';
+  else if (s && Object.values(s.ticks || {}).some(Boolean)) pill = '<span class="pill">started</span>';
+  return { label: day.title, minutes: day.minutes, pill };
+}
+let weekView = null;
+function renderWeek() {
+  const mon = weekView || mondayOf(viewDate), wi = weekInfo(mon), today = todayIso();
+  const rows = DAYKEYS.map((k, i) => {
+    const d = addDays(mon, i), st = dayStatus(d), c = coreOf(d), y = data.yoga[d];
+    return `<button class="wkrow${d === today ? ' today' : ''}" data-act="open-day" data-v="${d}">
+      <span class="d">${fmtDate(d).replace(',', '')}</span>
+      <span>${esc(st.label)}${st.minutes ? ` <span class="small muted">· ${st.minutes} min</span>` : ''} ${st.pill}</span>
+      <span class="marks">${c.rounds ? `<span class="pill done" title="Physio core rounds">core ${c.rounds}</span>` : '<span class="pill" title="Physio core">core –</span>'}${y && y.done ? '<span class="pill done">yoga ✓</span>' : ''}</span></button>`;
+  }).join('');
+  const coreDays = DAYKEYS.filter((_, i) => coreOf(addDays(mon, i)).rounds > 0).length;
+  const overview = PLAN.weeks.map(w => `<tr><td><b>${w.n}</b></td><td><b>${esc(w.title)}</b>${w.outline ? ' <span class="tag">outline</span>' : ''}<br><span class="small muted">${esc(w.purpose)}</span><br>
+      <span class="small">${DAYKEYS.filter(k => w.days[k] && w.days[k].blocks).map(k => `${k[0].toUpperCase() + k.slice(1)} ${w.days[k].minutes} min${w.days[k].optional ? ' (opt.)' : ''}`).join(' · ')}</span></td></tr>`).join('');
+  const lib = Object.entries(PLAN.blocks).map(([id, b]) => `<details><summary>${esc(b.name)}</summary>${b.items.map(it => `<div class="ex"><span class="reps">${esc(it.reps)}</span><span>${esc(it.name)}</span>${it.how ? `<span class="how">${esc(it.how)}</span>` : ''}</div>`).join('')}</details>`).join('');
+  return `<div class="card"><div class="spread"><h2>${wi.pre ? 'Before the plan' : `Week ${wi.n}${wi.repeatOf ? ` (repeats week ${wi.repeatOf})` : ''}`}</h2>
+      <span class="row"><button class="btn" data-act="week" data-v="-7" aria-label="Previous week">‹</button><button class="btn" data-act="week" data-v="7" aria-label="Next week">›</button></span></div>
+    <p class="small muted" style="margin:0">${fmtDate(mon)} – ${fmtDate(addDays(mon, 6))}${wi.week ? ' · ' + esc(wi.week.title) : ''}</p>
+    ${wi.week ? `<p class="small" style="margin:6px 0">${esc(wi.week.purpose)}</p>
+    <label class="check"><input type="checkbox" data-act="week-light" data-v="${mon}" ${wi.light ? 'checked' : ''}><span>Midweek game / double-header: use the lighter week</span></label>` : `<p class="small">The plan starts on ${fmtDate(PLAN.startDate, true)}.</p>`}
+    ${rows}
+    <p class="small muted" style="margin:10px 0 0">Physio core on ${coreDays} of 7 days this week.</p></div>
+    <div class="card"><h2>Plan overview</h2><table>${overview}</table>
+      <p class="small muted">Weeks 5–8 are an outline and will be adjusted after the week-4 test. After week ${PLAN.weeks.length} the app repeats weeks ${PLAN.repeatFrom}–${PLAN.weeks.length}.</p></div>
+    <div class="card"><h2>Block library</h2>${lib}</div>`;
+}
+
+function renderPhysio() {
+  const ph = data.physio, cur = ph.current;
+  const flagged = [];
+  Object.values(PLAN.blocks).forEach(b => b.items.forEach(it => { if (it.physioCheck) flagged.push(`<li><b>${esc(it.name)}</b> (${esc(b.name)}): ${esc(it.physioCheck)}</li>`); }));
+  return `<div class="card"><div class="spread"><h2>Current list</h2><span class="small muted">${cur ? 'last updated ' + fmtStamp(cur.t) : ''}</span></div>
+      ${cur ? `<ol style="margin:6px 0;padding-left:22px">${cur.lines.map(l => `<li style="padding:3px 0">${esc(l)}</li>`).join('')}</ol>` : '<p class="muted">No list yet.</p>'}
+      <p class="small muted" style="margin:0">Do it as often as you can, ideally daily, on top of your sessions. These are your physio’s exercises; the app shows them exactly as written.</p></div>
+    <div class="card"><h2>${cur ? 'Paste a new list' : 'Paste your list'}</h2>
+      <p class="small muted" style="margin:0 0 8px">Copy the note from Google Keep and paste it here. Each non-empty line becomes one exercise.${cur ? ' The current list moves to the archive.' : ''}</p>
+      <textarea id="keepText" placeholder="☐ Exercise one, 5 times&#10;☐ Exercise two, 5 times"></textarea>
+      <div class="row" style="margin-top:8px"><button class="btn primary" data-act="physio-save">${cur ? 'Replace current list' : 'Save list'}</button></div></div>
+    <div class="card"><h2>Older lists</h2>
+      ${ph.archive.length ? ph.archive.map((l, i) => `<div class="spread" style="border-top:1px solid var(--line);padding:6px 0"><span>${fmtStamp(l.t)} <span class="small muted">· ${l.lines.length} exercises</span></span>
+        <span class="row"><button class="btn" data-act="physio-view" data-i="${i}">View</button><button class="btn" data-act="physio-restore" data-i="${i}">Restore</button></span></div>`).join('') : '<p class="muted small" style="margin:0">Replaced lists appear here with their date.</p>'}</div>
+    <div class="card"><h2>Possible clashes to ask your physio about</h2>
+      <ul style="margin:6px 0;padding-left:20px" class="small">${flagged.join('')}</ul>
+      <p class="small muted" style="margin:0">The core work inside the sessions is kept simple (dead bug, side plank, carries, press-out hold) so it adds to the physio list without replacing it. If the physio gives you one of these same drills, do the physio’s version and skip the duplicate in the session.</p></div>`;
+}
+
+function renderLog() {
+  const today = todayIso();
+  const tests = Object.entries(data.tests).filter(([, t]) => t.pullups != null || t.pushups != null).sort((a, b) => b[0].localeCompare(a[0]));
+  const days = Array.from({ length: 28 }, (_, i) => addDays(today, i - 27));
+  const worst = d => { const p = data.pain[d]; if (!p) return null; const v = ['morning', 'pre', 'post'].map(k => p[k]).filter(x => x != null); return v.length ? Math.max(...v) : null; };
+  const bars = days.map(d => { const w = worst(d); return `<i class="${w == null ? 'none' : w > 3 ? 'hi' : ''}" style="height:${w == null ? 3 : Math.max(6, w * 10)}%" title="${fmtDate(d)}: ${w == null ? 'no entry' : w + '/10'}"></i>`; }).join('');
+  const painRows = Object.entries(data.pain).filter(([d]) => worst(d) != null).sort((a, b) => b[0].localeCompare(a[0])).slice(0, 10)
+    .map(([d, p]) => `<tr><td>${fmtDate(d)}</td><td>${p.morning ?? '–'}</td><td>${p.pre ?? '–'}</td><td>${p.post ?? '–'}</td></tr>`).join('');
+  const weeks = Array.from({ length: 8 }, (_, i) => addDays(mondayOf(today), -7 * i)).map(mon => {
+    const ds = DAYKEYS.map((_, i) => addDays(mon, i)), wi = weekInfo(mon);
+    const planned = ds.filter(d => dayInfo(d).type === 'session' && !dayInfo(d).day.optional).length;
+    const done = ds.filter(d => data.sessions[d] && data.sessions[d].status === 'done').length;
+    const rounds = ds.reduce((n, d) => n + coreOf(d).rounds, 0), cdays = ds.filter(d => coreOf(d).rounds > 0).length;
+    const yoga = ds.filter(d => data.yoga[d] && data.yoga[d].done).length;
+    return { mon, wi, planned, done, rounds, cdays, yoga };
+  }).filter((w, i) => i === 0 || w.done || w.rounds || w.yoga);
+  const sessions = Object.entries(data.sessions).filter(([, s]) => s.status || s.notes || Object.keys(s.weights || {}).length).sort((a, b) => b[0].localeCompare(a[0])).slice(0, 30)
+    .map(([d, s]) => { const di = dayInfo(d); const w = Object.entries(s.weights || {}).filter(([, v]) => v).map(([i, v]) => {
+        const e = di.day.blocks && di.day.blocks[i]; return `${esc(e && PLAN.blocks[e.block] ? PLAN.blocks[e.block].name : 'Block')}: ${esc(v)}`; }).join(' · ');
+      return `<tr><td>${fmtDate(d)}</td><td><b>${esc(di.day.title || 'Session')}</b> ${s.status === 'done' ? '<span class="pill done">done</span>' : s.status === 'skipped' ? '<span class="pill skip">skipped</span>' : ''}${s.readiness === 'light' ? ' <span class="pill">light</span>' : ''}
+        ${w ? `<br><span class="small">${w}</span>` : ''}${s.notes ? `<br><span class="small muted">${esc(s.notes)}</span>` : ''}</td></tr>`; }).join('');
+  const step = achStep();
+  return `<div class="card"><h2>Max tests <span class="small muted">every 4 weeks</span></h2>
+      <p class="small muted" style="margin:0 0 6px">${esc(PLAN.baseline)}</p>
+      ${tests.length ? `<table><tr><th>Date</th><th>Strict pull-ups</th><th>Push-ups</th></tr>${tests.map(([d, t]) => `<tr><td>${fmtDate(d)}</td><td>${t.pullups ?? '–'}</td><td>${t.pushups ?? '–'}</td></tr>`).join('')}</table>` : '<p class="muted small">No test yet. The first one is planned for Thursday of week 4.</p>'}
+      <div class="row" style="margin-top:8px"><label class="small">Date<input type="date" id="tDate" value="${today}" style="width:160px"></label>
+        <label class="small">Pull-ups<input class="tiny" id="tPull" type="number" min="0" inputmode="numeric"></label>
+        <label class="small">Push-ups<input class="tiny" id="tPush" type="number" min="0" inputmode="numeric"></label>
+        <button class="btn" data-act="test-add" style="align-self:flex-end">Add test</button></div></div>
+    <div class="card"><div class="spread"><h2>Achilles</h2><span class="small muted">worst score per day, last 4 weeks</span></div>
+      <div class="bars">${bars}</div>
+      ${painRows ? `<table><tr><th>Date</th><th>Morning</th><th>Before</th><th>After</th></tr>${painRows}</table>` : '<p class="muted small">No scores yet.</p>'}
+      <h3 style="margin-top:12px">Loading step: ${step} of 4</h3>
+      <div class="row" style="margin:6px 0">${[1, 2, 3, 4].map(n => `<button class="btn${n === step ? ' on' : ''}" data-act="step" data-v="${n}">Step ${n}</button>`).join('')}</div>
+      <ol class="small" style="margin:0;padding-left:20px">${[1, 2, 3, 4].map(n => `<li>${esc(PLAN.achillesSteps[n])}</li>`).join('')}</ol>
+      <p class="small muted">Pain rule: up to about 3/10 is fine if it is not worse the next morning. Otherwise drop back a step. Move up only after a calm week.
+        Check with your physio if two days in a row are flagged, pain goes above 5/10, the tendon is swollen or thickened, or morning stiffness does not ease after a few minutes of walking.</p></div>
+    <div class="card"><h2>Weeks</h2><table><tr><th>Week of</th><th>Sessions</th><th>Physio core</th><th>Yoga</th></tr>
+      ${weeks.map(w => `<tr><td>${fmtDate(w.mon)}${w.wi.week ? ` <span class="small muted">W${w.wi.n}</span>` : ''}</td><td>${w.done}${w.planned ? ' of ' + w.planned : ''}</td><td>${w.cdays} of 7 days · ${w.rounds} rounds</td><td>${w.yoga}</td></tr>`).join('')}</table></div>
+    <div class="card"><h2>Sessions</h2>${sessions ? `<table>${sessions}</table>` : '<p class="muted small" style="margin:0">Finished sessions, weights and notes appear here.</p>'}</div>
+    <div class="card"><h2>Backup</h2>
+      <p class="small muted" style="margin:0 0 8px">Export everything as a JSON file, or import a file. Importing merges into what is here; nothing is overwritten blindly.</p>
+      <div class="row"><button class="btn" data-act="export">Export JSON</button><button class="btn" data-act="import">Import JSON</button>
+      <input type="file" id="importFile" accept="application/json,.json" hidden></div><p class="small" id="ioMsg"></p></div>`;
+}
+
+/* ================= Timers ================= */
+let audioCtx = null;
+function beep(n = 1, freq = 880) {
+  if (navigator.vibrate) try { navigator.vibrate(n > 1 ? [200, 100, 200] : 200); } catch (e) {}
+  if (!settings.sound) return;
+  try {
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    for (let i = 0; i < n; i++) {
+      const o = audioCtx.createOscillator(), g = audioCtx.createGain(), t = audioCtx.currentTime + i * 0.28;
+      o.frequency.value = freq; o.connect(g); g.connect(audioCtx.destination);
+      g.gain.setValueAtTime(0.25, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.22); o.start(t); o.stop(t + 0.24);
+    }
+  } catch (e) {}
+}
+const mmss = s => `${Math.floor(s / 60)}:${pad(Math.floor(s % 60))}`;
+const rest = { end: 0, timer: null };
+function restStart(secs) {
+  if (audioCtx == null && settings.sound) beep(0);           // unlock audio on this tap
+  rest.end = Date.now() + secs * 1000; clearInterval(rest.timer); rest.timer = setInterval(restTick, 250); restTick();
+}
+function restTick() {
+  const left = Math.ceil((rest.end - Date.now()) / 1000), bar = $('#restBar');
+  if (left <= 0) { clearInterval(rest.timer); rest.timer = null; bar.hidden = true; if (rest.end) beep(2); rest.end = 0; return; }
+  bar.hidden = false; $('#restLeft').textContent = mmss(left);
+}
+function restStop() { rest.end = 0; clearInterval(rest.timer); rest.timer = null; $('#restBar').hidden = true; }
+
+const iv = { start: 0, timer: null, key: '', work: 30, rest: 60, rounds: 6 };
+function ivOpen(work, restS, rounds) {
+  ivStop(); $('#ivWork').value = work; $('#ivRest').value = restS; $('#ivRounds').value = rounds;
+  $('#ivDlg').showModal();
+}
+function ivStart() {
+  iv.work = Math.max(1, +$('#ivWork').value || 30); iv.rest = Math.max(0, +$('#ivRest').value || 0); iv.rounds = Math.max(1, +$('#ivRounds').value || 1);
+  if (audioCtx == null && settings.sound) beep(0);
+  iv.start = Date.now(); iv.key = ''; clearInterval(iv.timer); iv.timer = setInterval(ivTick, 200); $('#ivCfg').hidden = true; ivTick();
+}
+function ivStop(msg) {
+  clearInterval(iv.timer); iv.timer = null; iv.start = 0;
+  $('#ivDlg').classList.remove('hard'); $('#ivCfg').hidden = false;
+  $('#ivPhase').textContent = msg || 'Interval timer'; $('#ivBig').textContent = msg ? '✓' : '–'; $('#ivRound').textContent = '';
+}
+function ivTick() {
+  const lead = 5, el = (Date.now() - iv.start) / 1000, cyc = iv.work + iv.rest;
+  let phase, left, round = 0;
+  if (el < lead) { phase = 'GET READY'; left = lead - el; }
+  else {
+    const e = el - lead; round = Math.floor(e / cyc);
+    if (round >= iv.rounds) { beep(3, 660); return ivStop('Done'); }
+    const p = e - round * cyc; phase = p < iv.work ? 'HARD' : 'EASY'; left = p < iv.work ? iv.work - p : cyc - p; round++;
+  }
+  const key = phase + round;
+  if (key !== iv.key) { if (iv.key) beep(phase === 'HARD' ? 2 : 1, phase === 'HARD' ? 990 : 660); iv.key = key; }
+  $('#ivDlg').classList.toggle('hard', phase === 'HARD');
+  $('#ivPhase').textContent = phase; $('#ivBig').textContent = Math.ceil(left);
+  $('#ivRound').textContent = round ? `Round ${round} of ${iv.rounds}` : `${iv.rounds} × ${iv.work} s hard / ${iv.rest} s easy`;
+}
+$('#ivStart').onclick = ivStart; $('#ivStop').onclick = () => ivStop();
+$('#ivDlg').addEventListener('close', () => ivStop());
+
+/* ---------- keep the screen awake (optional) ---------- */
+let wakeLock = null;
+async function wakeLockSync() {
+  if (!('wakeLock' in navigator)) return;
+  try {
+    if (settings.keepAwake && !document.hidden) { if (!wakeLock) { wakeLock = await navigator.wakeLock.request('screen'); wakeLock.addEventListener('release', () => { wakeLock = null; }); } }
+    else if (wakeLock) { await wakeLock.release(); wakeLock = null; }
+  } catch (e) { wakeLock = null; }
+}
+
+/* ================= Export / import ================= */
+function exportJSON() { return JSON.stringify({ app: 'workout-planner', version: 1, exportedAt: new Date().toISOString(), data }, null, 2); }
+function importJSON(text) {
+  const obj = JSON.parse(text), d = obj && obj.app === 'workout-planner' ? obj.data : null;
+  if (!d || typeof d !== 'object' || !d.sessions) throw new Error('This is not a 4th Quarter Ready export file.');
+  data = mergeData(data, d); persist(); render();
+}
+function downloadExport() {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([exportJSON()], { type: 'application/json' }));
+  a.download = `4q-ready-${iso(new Date())}.json`; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+
+/* ================= Events ================= */
+$('#tabs').addEventListener('click', e => { const b = e.target.closest('[data-tab]'); if (b) showTab(b.dataset.tab); });
+function showTab(t) { settings.tab = t; saveSettings(); render(); window.scrollTo(0, 0); }
+$('#restBar').addEventListener('click', e => {
+  const a = e.target.closest('[data-act]'); if (!a) return;
+  if (a.dataset.act === 'rest-stop') restStop(); else { rest.end += 15000; restTick(); }
+});
+view.addEventListener('click', async e => {
+  const tabLink = e.target.closest('[data-tab]'); if (tabLink) return showTab(tabLink.dataset.tab);
+  const b = e.target.closest('[data-act]'); if (!b || b.matches('input')) return;
+  const act = b.dataset.act, v = b.dataset.v, date = viewDate;
+  switch (act) {
+    case 'day': viewDate = v === '0' ? todayIso() : addDays(viewDate, +v); weekView = null; break;
+    case 'open-day': viewDate = v; settings.tab = 'today'; saveSettings(); window.scrollTo(0, 0); break;
+    case 'week': weekView = addDays(weekView || mondayOf(viewDate), +v); break;
+    case 'ready': touchSession(date, s => { s.readiness = s.readiness === v ? null : v; if (s.status === 'skipped') s.status = null; }); break;
+    case 'tick': {
+      const i = b.dataset.i, k = +b.dataset.k; let added = false;
+      touchSession(date, s => { const cur = s.ticks[i] || 0; added = cur !== k + 1; s.ticks[i] = added ? k + 1 : k; });
+      if (added && settings.autoRest) restStart(PLAN.restSeconds || 45);
+      break; }
+    case 'finish': touchSession(date, s => { s.status = s.status === 'done' ? null : 'done'; }); break;
+    case 'skip': touchSession(date, s => { s.status = s.status === 'skipped' ? null : 'skipped'; }); break;
+    case 'pain': setPain(date, b.dataset.field, +v); break;
+    case 'step': data.achilles = { step: +v, t: now() }; persist(); break;
+    case 'core-round': setCore(date, c => { c.rounds = (c.rounds || 0) + 1; c.checked = []; }); break;
+    case 'core-undo': setCore(date, c => { c.rounds = Math.max(0, (c.rounds || 0) - 1); }); break;
+    case 'yoga': data.yoga[date] = { done: !(data.yoga[date] && data.yoga[date].done), t: now() }; persist(); break;
+    case 'routine': return info(`<h2 style="margin-top:0">Short routine (10–20 min)</h2>` + PLAN.yoga.routine.map(id => { const bl = PLAN.blocks[id]; return bl ? `<h3 style="margin:10px 0 4px">${esc(bl.name)}</h3>` + bl.items.map(it => `<div class="ex"><span class="reps">${esc(it.reps)}</span><span>${esc(it.name)}</span>${it.how ? `<span class="how">${esc(it.how)}</span>` : ''}</div>`).join('') : ''; }).join(''));
+    case 'rest': return restStart(+v);
+    case 'interval': return ivOpen(+b.dataset.work, +b.dataset.rest, +b.dataset.rounds);
+    case 'physio-save': {
+      const lines = parseKeep($('#keepText').value);
+      if (!lines.length) return;
+      replacePhysio(lines); break; }
+    case 'physio-view': { const l = data.physio.archive[+b.dataset.i]; return info(`<h2 style="margin-top:0">List from ${fmtStamp(l.t)}</h2><p class="small muted">Archived ${fmtStamp(l.archivedAt)}</p><ol style="padding-left:22px">${l.lines.map(x => `<li>${esc(x)}</li>`).join('')}</ol>`); }
+    case 'physio-restore': {
+      const l = data.physio.archive[+b.dataset.i];
+      if (!await ask(`Make the list from ${fmtStamp(l.t)} the current one? The current list moves to the archive.`, 'Restore')) return;
+      data.physio.archive = data.physio.archive.filter(x => x.id !== l.id);
+      replacePhysio(l.lines); break; }
+    case 'test-add': {
+      const d = $('#tDate').value, pu = $('#tPull').value, ps = $('#tPush').value;
+      if (!d || (pu === '' && ps === '')) return;
+      data.tests[d] = { ...(data.tests[d] || {}), ...(pu !== '' ? { pullups: +pu } : {}), ...(ps !== '' ? { pushups: +ps } : {}), t: now() }; persist(); break; }
+    case 'export': downloadExport(); $('#ioMsg').textContent = 'Export file saved to your downloads.'; return;
+    case 'import': return $('#importFile').click();
+    default: return;
+  }
+  render();
+});
+view.addEventListener('change', e => {
+  const el = e.target, act = el.dataset.act, f = el.dataset.field, date = viewDate;
+  if (act === 'core-check') { const i = +el.dataset.i; return setCore(date, c => { c.checked = el.checked ? [...new Set([...c.checked, i])] : c.checked.filter(x => x !== i); }); }
+  if (act === 'set') { settings[el.dataset.k] = el.checked; saveSettings(); if (el.dataset.k === 'keepAwake') wakeLockSync(); return; }
+  if (act === 'week-light') { data.weekFlags[el.dataset.v] = { light: el.checked, t: now() }; persist(); return render(); }
+  if (f === 'weight') return touchSession(date, s => { s.weights[el.dataset.i] = el.value.trim(); });
+  if (f === 'notes') return touchSession(date, s => { s.notes = el.value; });
+  if (f === 'test-pullups' || f === 'test-pushups') {
+    const k = f === 'test-pullups' ? 'pullups' : 'pushups', t = { ...(data.tests[date] || {}) };
+    if (el.value === '') delete t[k]; else t[k] = +el.value;
+    t.t = now(); data.tests[date] = t; return persist();
+  }
+  if (el.id === 'importFile' && el.files[0]) {
+    const r = new FileReader();
+    r.onload = () => { let msg = 'Import merged into your data.'; try { importJSON(r.result); } catch (err) { msg = 'Import failed: ' + err.message; } const m = $('#ioMsg'); if (m) m.textContent = msg; };
+    r.readAsText(el.files[0]);
+  }
+});
+
+/* ================= Account dialog (same pattern as FretWise) ================= */
+const AUTH_ERRORS = {
+  'auth/invalid-credential':'Wrong email or password.', 'auth/wrong-password':'Wrong email or password.', 'auth/user-not-found':'No account with that email — try Create account.',
+  'auth/email-already-in-use':'That email already has an account — try Sign in.', 'auth/weak-password':'Password needs at least 6 characters.',
+  'auth/invalid-email':'That email address doesn’t look right.', 'auth/missing-password':'Enter a password.', 'auth/too-many-requests':'Too many attempts — wait a minute and try again.',
+  'auth/network-request-failed':'No connection — check your internet.', 'auth/unauthorized-domain':'This site isn’t authorised in Firebase yet (Authentication → Settings → Authorized domains).',
+  'auth/popup-blocked':'Your browser blocked the sign-in popup — allow popups for this site.',
+};
+function renderAccount() {
+  const btn = $('#acctBtn');
+  btn.hidden = !account.available;
+  btn.textContent = account.user ? '● ' + account.user.name.split(/[ @]/)[0] : 'Sign in';
+  btn.title = account.user ? 'Account' : 'Sign in to sync across devices';
+  $('#syncStatus').textContent = account.user ? account.status : 'Saved on this device';
+  if (!$('#acctDlg').open) return;
+  $('#acctBody').innerHTML = account.user
+    ? `<h2 style="margin-top:0">Your account</h2><p>Signed in as <b>${esc(account.user.name)}</b></p>
+       <p class="small muted">${esc(account.status)}</p>
+       <p class="small muted">Sessions, physio lists, Achilles scores and tests are saved to your account and follow you to any device.</p>
+       <button class="btn" data-act="signout">Sign out</button>`
+    : `<h2 style="margin-top:0">Sync your training log</h2>
+       <p class="small muted">Sign in to keep your data on any device. Without an account it is saved in this browser only.</p>
+       <button class="btn primary wide" data-act="google">Continue with Google</button>
+       <div class="or">or with email</div>
+       <input type="email" id="acEmail" placeholder="Email" autocomplete="email" style="margin-bottom:8px">
+       <input type="password" id="acPass" placeholder="Password (6+ characters)" autocomplete="current-password">
+       <div class="dlg-row"><button class="btn primary" data-act="signin">Sign in</button><button class="btn" data-act="signup">Create account</button></div>
+       <button class="linkish" data-act="reset">Forgot password?</button>
+       <p class="small" id="acMsg"></p>`;
+}
+$('#acctBtn').addEventListener('click', () => { $('#acctDlg').showModal(); renderAccount(); });
+$('#acctBody').addEventListener('click', async e => {
+  const b = e.target.closest('[data-act]'); if (!b || !window.WorkoutCloud) return;
+  const cloud = window.WorkoutCloud, act = b.dataset.act, email = $('#acEmail')?.value.trim(), pass = $('#acPass')?.value;
+  const msg = (t, ok) => { const m = $('#acMsg'); if (m) { m.textContent = t; m.style.color = ok ? 'var(--good)' : 'var(--bad)'; } };
+  try {
+    if (act === 'google') await cloud.signInGoogle();
+    else if (act === 'signin') await cloud.signInEmail(email, pass);
+    else if (act === 'signup') await cloud.signUpEmail(email, pass);
+    else if (act === 'reset') { if (!email) return msg('Enter your email first.'); await cloud.resetPassword(email); return msg('Password reset email sent.', true); }
+    else if (act === 'signout') { if (saveTimer || account.dirty) await flushSave(); await cloud.signOut(); }
+    $('#acctDlg').close();
+  } catch (err) {
+    if (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') return;
+    msg(AUTH_ERRORS[err.code] || 'Something went wrong: ' + (err.message || err));
+  }
+});
+window.Workout = { setAccount, cloudReady() { account.available = true; renderAccount(); },
+  // exposed for testing and debugging in the browser console
+  mergeData, parseKeep, exportJSON, importJSON, getData: () => data };
+
+/* ================= Start ================= */
+render(); renderAccount(); wakeLockSync();
+// A new day while the app stays open: follow the calendar.
+let lastToday = todayIso();
+setInterval(() => { const t = todayIso(); if (t !== lastToday) { if (viewDate === lastToday) viewDate = t; lastToday = t; render(); } }, 60000);
+
+if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+  const local = ['localhost', '127.0.0.1'].includes(location.hostname);   // no caching while developing, unless ?sw=1
+  if (!local || new URLSearchParams(location.search).has('sw'))
+    window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+}
+</script>
+
+<!-- Cloud accounts (Firebase). Only runs on a web server with a config in firebase-config.js;
+     opened as a local file the app works signed out. -->
+<script type="module">
+const cfg = window.FIREBASE_CONFIG;
+if (cfg && location.protocol !== 'file:') {
+  try {
+    const base = 'https://www.gstatic.com/firebasejs/10.12.2/';
+    const [{ initializeApp }, A, F] = await Promise.all([
+      import(base + 'firebase-app.js'), import(base + 'firebase-auth.js'), import(base + 'firebase-firestore.js'),
+    ]);
+    const app = initializeApp(cfg), auth = A.getAuth(app), db = F.getFirestore(app);
+    window.WorkoutCloud = {
+      signInGoogle: () => A.signInWithPopup(auth, new A.GoogleAuthProvider()),
+      signInEmail: (email, pass) => A.signInWithEmailAndPassword(auth, email, pass),
+      signUpEmail: (email, pass) => A.createUserWithEmailAndPassword(auth, email, pass),
+      resetPassword: email => A.sendPasswordResetEmail(auth, email),
+      signOut: () => A.signOut(auth),
+    };
+    A.onAuthStateChanged(auth, async u => {
+      if (!u) return Workout.setAccount(null);
+      // One private document per user: workouts/{uid} → { data, updatedAt }
+      const ref = F.doc(db, 'workouts', u.uid);
+      const loadFn = async () => { const snap = await F.getDoc(ref); return snap.exists() ? (snap.data().data || {}) : {}; };
+      let cloud = {}, ok = true;
+      try { cloud = await loadFn(); } catch (e) { ok = false; console.warn('Could not load cloud data', e); }
+      Workout.setAccount({ uid: u.uid, name: u.displayName || u.email || 'You' }, cloud,
+        d => F.setDoc(ref, { data: d, updatedAt: F.serverTimestamp() }, { merge: false }), loadFn, ok);
+    });
+    Workout.cloudReady();
+  } catch (e) { console.warn('Cloud sign-in unavailable — using this browser only.', e); }
+}
+</script>
+</body>
+</html>
