@@ -658,7 +658,11 @@ function renderOptions() {
     <h3>Down Dog link</h3>
     <p class="small muted" style="margin:4px 0 8px">Share a practice or preset from Down Dog, copy the link and paste it here. The yoga button then opens the app on that practice. Leave empty for the default.</p>
     <div class="row" style="flex-wrap:nowrap"><input id="optYoga" type="url" inputmode="url" placeholder="https://www.downdogapp.com/share/…" value="${esc((data.yogaLink && data.yogaLink.url) || '')}" aria-label="Down Dog link"><button class="btn" data-act="yoga-save">Save</button></div>
-    <p class="small" id="optYogaMsg" style="margin:4px 0 0"></p>`;
+    <p class="small" id="optYogaMsg" style="margin:4px 0 0"></p>
+    <h3>On this device</h3>
+    <label class="check"><input type="checkbox" data-set="keepAwake" ${settings.keepAwake ? 'checked' : ''}><span>Keep the screen awake${'wakeLock' in navigator ? '' : ' (not supported in this browser)'}</span></label>
+    <label class="check"><input type="checkbox" data-set="autoRest" ${settings.autoRest ? 'checked' : ''}><span>Start the rest timer when I tick a set</span></label>
+    <label class="check"><input type="checkbox" data-set="sound" ${settings.sound ? 'checked' : ''}><span>Beep when a timer ends</span></label>`;
 }
 $('#optBtn').addEventListener('click', () => { $('#optDlg').showModal(); renderOptions(); });
 $('#optBody').addEventListener('click', e => {
@@ -678,6 +682,8 @@ $('#optBody').addEventListener('click', e => {
   }
 });
 $('#optBody').addEventListener('change', e => {
+  const k = e.target.dataset.set;
+  if (k) { settings[k] = e.target.checked; saveSettings(); if (k === 'keepAwake') wakeLockSync(); return render(); }
   if (e.target.id !== 'calFile' || !e.target.files[0]) return;
   const r = new FileReader();
   r.onload = () => {
