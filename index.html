@@ -73,7 +73,7 @@ nav button.on{color:var(--accent);font-weight:700}
 nav button span{display:block;font-size:20px;line-height:1.2}
 #restBar{position:fixed;left:8px;right:8px;bottom:calc(68px + env(safe-area-inset-bottom));z-index:7;background:var(--ink);color:var(--bg);
   border-radius:14px;padding:8px 12px;display:flex;align-items:center;gap:10px;box-shadow:0 4px 18px rgba(0,0,0,.3)}
-#restBar[hidden]{display:none}
+#restBar[hidden]{display:none} [hidden]{display:none!important}
 #restBar b{font-size:26px;font-variant-numeric:tabular-nums;flex:1}
 #restBar .btn{min-height:40px}
 dialog{border:1px solid var(--line);border-radius:16px;background:var(--card);color:var(--ink);padding:18px;width:min(520px,calc(100vw - 24px));max-height:calc(100vh - 40px)}
@@ -197,10 +197,13 @@ main{padding-top:14px} .card{box-shadow:0 1px 2px rgba(60,30,0,.04)}
   <div id="ivBig">–</div>
   <p class="small" id="ivRound" style="text-align:center"></p>
   <div class="row" id="ivCfg">
-    <label class="small">Hard s<input class="tiny" id="ivWork" type="number" min="1" inputmode="numeric"></label>
-    <label class="small">Easy s<input class="tiny" id="ivRest" type="number" min="0" inputmode="numeric"></label>
+    <label class="small">Hard<input class="tiny" id="ivWork" type="number" min="1" inputmode="decimal"></label>
+    <label class="small">Easy<input class="tiny" id="ivRest" type="number" min="0" inputmode="decimal"></label>
+    <label class="small">in<select id="ivUnit"><option value="1">seconds</option><option value="60">minutes</option></select></label>
     <label class="small">Rounds<input class="tiny" id="ivRounds" type="number" min="1" inputmode="numeric"></label>
   </div>
+  <div class="dlg-row" id="ivPre"><button class="btn" id="ivSave">Save as quick button</button><button class="btn" id="ivDel" hidden>Remove this button</button></div>
+  <p class="small" id="ivMsg" style="text-align:center;margin:4px 0 0"></p>
   <div class="dlg-row"><button class="btn primary" id="ivStart">Start</button><button class="btn" id="ivStop">Stop</button><button class="btn" data-close>Close</button></div>
 </dialog>
 
@@ -424,7 +427,7 @@ const load = (k, d) => { try { const v = localStorage.getItem(LS + k); return v 
 const store = (k, v) => { try { localStorage.setItem(LS + k, JSON.stringify(v)); } catch (e) {} };
 const unstore = k => { try { localStorage.removeItem(LS + k); } catch (e) {} };
 
-const emptyData = () => ({ v: 1, sessions: {}, core: {}, yoga: {}, pain: {}, tests: {}, weekFlags: {}, achilles: { step: 1, t: 0 }, physio: { current: null, archive: [] } });
+const emptyData = () => ({ v: 1, sessions: {}, core: {}, yoga: {}, pain: {}, tests: {}, weekFlags: {}, ivPresets: {}, achilles: { step: 1, t: 0 }, physio: { current: null, archive: [] } });
 const normalize = d => { const e = emptyData(); d = d || {}; return { ...e, ...d, physio: { ...e.physio, ...(d.physio || {}) }, achilles: d.achilles || e.achilles }; };
 const hasData = d => !!d && (['sessions', 'core', 'yoga', 'pain', 'tests', 'weekFlags'].some(k => Object.keys(d[k] || {}).length) || !!(d.physio && d.physio.current));
 
@@ -445,7 +448,7 @@ function mergeData(a, b) {
   const newer = (x, y) => !x ? y : !y ? x : ((y.t || 0) > (x.t || 0) ? y : x);
   const mergeMap = (A, B) => { const o = { ...A }; for (const k in B) o[k] = newer(A[k], B[k]); return o; };
   const out = { v: 1 };
-  ['sessions', 'core', 'yoga', 'pain', 'tests', 'weekFlags'].forEach(k => out[k] = mergeMap(a[k], b[k]));
+  ['sessions', 'core', 'yoga', 'pain', 'tests', 'weekFlags', 'ivPresets'].forEach(k => out[k] = mergeMap(a[k], b[k]));
   out.achilles = newer(a.achilles, b.achilles);
   const yl = newer(a.yogaLink, b.yogaLink); if (yl) out.yogaLink = yl;
   const gc = newer(a.gameCal, b.gameCal); if (gc) out.gameCal = gc;
@@ -629,7 +632,7 @@ async function refreshGames(force) {
 }
 
 /* ================= Options dialog: colour theme, game calendar, Down Dog link ================= */
-const THEMES = { amber: ['Amber', '#e8590c', '#fcc419'], blue: ['Court blue', '#1c64d9', '#2f7fe0'], green: ['Green', '#2b8a3e', '#2f9247'], crimson: ['Crimson', '#c92a2a', '#e03131'], graphite: ['Graphite', '#343a40', '#5c6670'] };
+const THEMES = { amber: ['Game Ball', '#e8590c', '#fcc419'], blue: ['Away Jersey', '#1c64d9', '#2f7fe0'], green: ['Home Court', '#2b8a3e', '#2f9247'], crimson: ['Buzzer Beater', '#c92a2a', '#e03131'], graphite: ['Whistle', '#343a40', '#5c6670'] };
 function applyTheme() {
   const t = THEMES[settings.theme] ? settings.theme : 'amber';
   if (t === 'amber') delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = t;
@@ -835,16 +838,13 @@ function yogaCard(date, type) {
     <p class="small muted" style="margin:4px 0">Hips, hamstrings, ankles/calves, back. A suggestion, never a requirement.</p>
     <div class="row"><button class="btn${done ? ' on' : ''}" data-act="yoga">${done ? '✓ Done' : 'Done'}</button>
       <button class="linkish" data-act="routine">Short routine</button>
-      <a href="${esc(yogaHref())}" target="_blank" rel="noopener">${esc(PLAN.yoga.label)}</a></div>
-    <details><summary>Down Dog link</summary>
-      <p class="small muted" style="margin:0 0 6px">To open the Down Dog app directly (and on your favourite practice), share a practice or preset from Down Dog, copy the link and paste it here. Without it, the button opens the app on Android if it can, otherwise the website.</p>
-      <div class="row" style="flex-wrap:nowrap"><input id="yogaLink" type="url" inputmode="url" placeholder="https://www.downdogapp.com/share/…" value="${esc((data.yogaLink && data.yogaLink.url) || '')}"><button class="btn" data-act="yoga-link">Save</button></div>
-      <p class="small" id="yogaLinkMsg" style="margin:4px 0 0"></p></details></div>`;
+      <a href="${esc(yogaHref())}" target="_blank" rel="noopener">${esc(PLAN.yoga.label)}</a></div></div>`;
 }
 function timersCard() {
   return `<div class="card"><h2>Timers</h2>
     <div class="row"><span class="small muted">Rest</span>${[30, 45, 60, 90].map(n => `<button class="btn" data-act="rest" data-v="${n}">${n} s</button>`).join('')}</div>
-    <div class="row" style="margin-top:8px"><button class="btn" data-act="interval" data-work="30" data-rest="60" data-rounds="6">Interval timer (30 s / 60 s)</button></div>
+    <div class="row" style="margin-top:8px"><span class="small muted">Intervals</span>${[{ work: 30, rest: 60, rounds: 6 }, ...ivPresets()].map(p => `<button class="btn" data-act="interval" data-go="1" data-work="${p.work}" data-rest="${p.rest}" data-rounds="${p.rounds}" data-pid="${esc(p.id || '')}">${ivLabel(p)}</button>`).join('')}<button class="btn" data-act="interval" data-work="30" data-rest="60" data-rounds="6">+ Custom</button></div>
+    <p class="small muted" style="margin:6px 0 0">A button starts after a 5 s countdown. "+ Custom" lets you set your own and save it as a button.</p>
     <details><summary>Timer settings</summary>
     <label class="check"><input type="checkbox" data-act="set" data-k="autoRest" ${settings.autoRest ? 'checked' : ''}><span>Start the rest timer when I tick a set</span></label>
     <label class="check"><input type="checkbox" data-act="set" data-k="keepAwake" ${settings.keepAwake ? 'checked' : ''}><span>Keep the screen awake${'wakeLock' in navigator ? '' : ' (not supported in this browser)'}</span></label>
@@ -1016,19 +1016,39 @@ function restTick() {
 }
 function restStop() { rest.end = 0; clearInterval(rest.timer); rest.timer = null; $('#restBar').hidden = true; }
 
-const iv = { start: 0, timer: null, key: '', work: 30, rest: 60, rounds: 6 };
-function ivOpen(work, restS, rounds) {
-  ivStop(); $('#ivWork').value = work; $('#ivRest').value = restS; $('#ivRounds').value = rounds;
-  $('#ivDlg').showModal();
+const iv = { start: 0, timer: null, key: '', work: 30, rest: 60, rounds: 6, pid: '' };
+const ivPresets = () => Object.values(data.ivPresets || {}).filter(p => p && !p.del && p.work > 0).sort((a, b) => (a.t || 0) - (b.t || 0));
+const ivDur = s => s >= 60 && s % 60 === 0 ? `${s / 60} min` : s < 60 ? `${s} s` : mmss(s);
+const ivLabel = p => `${p.rounds} × ${ivDur(p.work)} / ${ivDur(p.rest)}`;
+function ivRead() {
+  const u = +$('#ivUnit').value || 1;
+  return { work: Math.max(1, Math.round((+$('#ivWork').value || 0) * u) || 30), rest: Math.max(0, Math.round((+$('#ivRest').value || 0) * u)), rounds: Math.max(1, Math.round(+$('#ivRounds').value) || 1) };
+}
+function ivOpen(work, restS, rounds, pid, go) {
+  ivStop(); const u = work >= 60 && work % 60 === 0 && restS % 60 === 0 ? 60 : 1;
+  $('#ivUnit').value = u; $('#ivWork').value = work / u; $('#ivRest').value = restS / u; $('#ivRounds').value = rounds;
+  iv.pid = pid || ''; $('#ivDel').hidden = !iv.pid; $('#ivMsg').textContent = '';
+  $('#ivDlg').showModal(); if (go) ivStart();
 }
 function ivStart() {
-  iv.work = Math.max(1, +$('#ivWork').value || 30); iv.rest = Math.max(0, +$('#ivRest').value || 0); iv.rounds = Math.max(1, +$('#ivRounds').value || 1);
+  Object.assign(iv, ivRead());
   if (audioCtx == null && settings.sound) beep(0);
-  iv.start = Date.now(); iv.key = ''; clearInterval(iv.timer); iv.timer = setInterval(ivTick, 200); $('#ivCfg').hidden = true; ivTick();
+  iv.start = Date.now(); iv.key = ''; clearInterval(iv.timer); iv.timer = setInterval(ivTick, 200); $('#ivCfg').hidden = true; $('#ivPre').hidden = true; $('#ivMsg').textContent = ''; ivTick();
 }
+$('#ivSave').onclick = () => {
+  const p = ivRead(), same = ivPresets().find(q => q.work === p.work && q.rest === p.rest && q.rounds === p.rounds);
+  if (same) { iv.pid = same.id; $('#ivMsg').textContent = 'This one is already a quick button.'; }
+  else { const id = 'p' + Date.now().toString(36); data.ivPresets[id] = { id, ...p, t: now() }; iv.pid = id; persist(); render(); $('#ivMsg').textContent = `Saved: ${ivLabel(p)}.`; }
+  $('#ivDel').hidden = false;
+};
+$('#ivDel').onclick = () => {
+  if (!iv.pid) return;
+  data.ivPresets[iv.pid] = { id: iv.pid, del: true, t: now() }; iv.pid = ''; persist(); render();
+  $('#ivDel').hidden = true; $('#ivMsg').textContent = 'Quick button removed.';
+};
 function ivStop(msg) {
   clearInterval(iv.timer); iv.timer = null; iv.start = 0;
-  $('#ivDlg').classList.remove('hard'); $('#ivCfg').hidden = false;
+  $('#ivDlg').classList.remove('hard'); $('#ivCfg').hidden = false; $('#ivPre').hidden = false;
   $('#ivPhase').textContent = msg || 'Interval timer'; $('#ivBig').textContent = msg ? '✓' : '–'; $('#ivRound').textContent = '';
 }
 function ivTick() {
@@ -1043,8 +1063,8 @@ function ivTick() {
   const key = phase + round;
   if (key !== iv.key) { if (iv.key) beep(phase === 'HARD' ? 2 : 1, phase === 'HARD' ? 990 : 660); iv.key = key; }
   $('#ivDlg').classList.toggle('hard', phase === 'HARD');
-  $('#ivPhase').textContent = phase; $('#ivBig').textContent = Math.ceil(left);
-  $('#ivRound').textContent = round ? `Round ${round} of ${iv.rounds}` : `${iv.rounds} × ${iv.work} s hard / ${iv.rest} s easy`;
+  $('#ivPhase').textContent = phase; $('#ivBig').textContent = left > 60 ? mmss(Math.ceil(left)) : Math.ceil(left);
+  $('#ivRound').textContent = round ? `Round ${round} of ${iv.rounds}` : `${iv.rounds} × ${ivDur(iv.work)} hard / ${ivDur(iv.rest)} easy`;
 }
 $('#ivStart').onclick = ivStart; $('#ivStop').onclick = () => ivStop();
 $('#ivDlg').addEventListener('close', () => ivStop());
@@ -1102,13 +1122,9 @@ view.addEventListener('click', async e => {
     case 'core-round': setCore(date, c => { c.rounds = (c.rounds || 0) + 1; c.checked = []; }); break;
     case 'core-undo': setCore(date, c => { c.rounds = Math.max(0, (c.rounds || 0) - 1); }); break;
     case 'yoga': data.yoga[date] = { done: !(data.yoga[date] && data.yoga[date].done), t: now() }; persist(); break;
-    case 'yoga-link': {
-      const u = $('#yogaLink').value.trim(), m = $('#yogaLinkMsg');
-      if (u && !(u.toLowerCase().startsWith('https://') && !/\s/.test(u))) { m.textContent = 'That does not look like a link (it should start with https://).'; return; }
-      data.yogaLink = { url: u, t: now() }; persist(); break; }
     case 'routine': return info(`<h2 style="margin-top:0">Short routine (10–20 min)</h2>` + PLAN.yoga.routine.map(id => { const bl = PLAN.blocks[id]; return bl ? `<h3 style="margin:10px 0 4px">${esc(bl.name)}</h3>` + bl.items.map(it => `<div class="ex"><span class="reps">${esc(it.reps)}</span><span>${esc(it.name)}</span>${it.how ? `<span class="how">${esc(it.how)}</span>` : ''}</div>`).join('') : ''; }).join(''));
     case 'rest': return restStart(+v);
-    case 'interval': return ivOpen(+b.dataset.work, +b.dataset.rest, +b.dataset.rounds);
+    case 'interval': return ivOpen(+b.dataset.work, +b.dataset.rest, +b.dataset.rounds, b.dataset.pid || '', !!b.dataset.go);
     case 'physio-edit': { const c = data.physio.current; physioEdit = c ? c.lines.map((name, i) => ({ name, reps: (c.reps && c.reps[i]) || '' })) : [{ name: '', reps: '' }]; break; }
     case 'pe-add': physioEdit.push({ name: '', reps: '' }); break;
     case 'pe-del': physioEdit.splice(+b.dataset.i, 1); break;
