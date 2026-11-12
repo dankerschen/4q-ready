@@ -1,12 +1,12 @@
 /* Service worker: makes the app start offline.
    Only this site's own files are cached. Requests to other servers (Firebase sign-in and sync)
    pass straight through. For a new release: bump VERSION. */
-const VERSION = "v10";
+const VERSION = "v11";
 const CACHE = "4q-ready-" + VERSION;
 const SHELL = ["./", "index.html", "firebase-config.js", "manifest.webmanifest", "icon.svg", "icon-192.png", "icon-512.png", "icon-maskable-512.png", "apple-touch-icon.png"];
 
 self.addEventListener("install", e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL.map(u => new Request(u, { cache: "reload" })))).then(() => self.skipWaiting()));
 });
 
 self.addEventListener("activate", e => {
@@ -23,7 +23,7 @@ self.addEventListener("fetch", e => {
   e.respondWith(
     caches.open(CACHE).then(async cache => {
       const hit = await cache.match(req, { ignoreSearch: true });
-      const net = fetch(req).then(res => { if (res.ok) cache.put(req, res.clone()); return res; }).catch(() => hit);
+      const net = fetch(req, { cache: "no-cache" }).then(res => { if (res.ok) cache.put(req, res.clone()); return res; }).catch(() => hit);
       return hit || net;
     })
   );

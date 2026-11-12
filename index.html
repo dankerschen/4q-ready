@@ -235,6 +235,7 @@ main{padding-top:14px} .card{box-shadow:0 1px 2px rgba(60,30,0,.04)}
             Days not listed are off days. type: 'game' | 'recovery'. optional: true = optional third session.
    After the last week the app repeats weeks from `repeatFrom` until you add more weeks.
    ===================================================================================== */
+const APP_VERSION = "v11";   // keep the same as VERSION in sw.js
 const PLAN = {
   startDate: '2026-11-16',            // Monday of week 1
   repeatFrom: 5,                      // after the last week, cycle weeks 5…8
@@ -796,7 +797,11 @@ function renderOptions() {
     <label class="check"><input type="checkbox" data-set="keepAwake" ${settings.keepAwake ? 'checked' : ''}><span>Keep the screen awake${'wakeLock' in navigator ? '' : ' (not supported in this browser)'}</span></label>
     <label class="check"><input type="checkbox" data-set="autoRest" ${settings.autoRest ? 'checked' : ''}><span>Start the rest timer when I tick a set</span></label>
     <label class="check"><input type="checkbox" data-set="sound" ${settings.sound ? 'checked' : ''}><span>Sounds on</span></label>
-    <div id="optSounds"></div>`;
+    <div id="optSounds"></div>
+    <h3>App version</h3>
+    <p class="small muted" style="margin:4px 0 8px">This device runs ${APP_VERSION}. New versions normally arrive by themselves when you open the app.</p>
+    <div class="dlg-row" style="justify-content:flex-start"><button class="btn" data-act="app-update">Update now</button></div>
+    <p class="small" id="updMsg" style="margin:8px 0 0"></p>`;
   renderSounds();
 }
 $('#optBtn').addEventListener('click', () => { $('#optDlg').showModal(); renderOptions(); });
@@ -815,6 +820,7 @@ $('#optBody').addEventListener('click', e => {
     if (u && !isHttps(u)) { m.textContent = 'That does not look like a link (it should start with https://).'; return; }
     data.yogaLink = { url: u, t: now() }; persist(); render(); m.textContent = u ? 'Saved.' : 'Removed; the default is used.';
   }
+  else if (act === 'app-update') appUpdate();
   else if (act === 'snd-test') sound(b.dataset.v, true);
   else if (act === 'snd-reset') { delete sounds[b.dataset.v]; soundStore(b.dataset.v, null).catch(() => {}); soundMsg = 'Back to the default.'; renderSounds(); }
 });
@@ -1454,6 +1460,25 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   const local = ['localhost', '127.0.0.1'].includes(location.hostname);   // no caching while developing, unless ?sw=1
   if (!local || new URLSearchParams(location.search).has('sw'))
     window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+  // A new version took over: show it at once if the app was only just opened (never in the middle of a session).
+  const had = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener('controllerchange', () => { if (had && performance.now() < 20000 && !sessionStorage.getItem('swReloaded')) { sessionStorage.setItem('swReloaded', '1'); location.reload(); } });
+  // Phones often resume the app instead of restarting it, so look for a new version whenever it comes back to the front.
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) navigator.serviceWorker.getRegistration().then(r => r && r.update()).catch(() => {}); });
+}
+async function appUpdate() {
+  const m = $('#updMsg');
+  if (!navigator.onLine) { m.textContent = 'You are offline. Try again with a connection.'; return; }
+  m.textContent = 'Updating…';
+  try {
+    const res = await fetch('sw.js?t=' + Date.now(), { cache: 'no-store' });
+    const live = ((await res.text()).match(/VERSION = "([^"]+)"/) || [])[1];
+    if (live === APP_VERSION) { m.textContent = 'You already have the latest version (' + APP_VERSION + ').'; return; }
+    if ('caches' in window) await Promise.all((await caches.keys()).filter(k => k.startsWith('4q-ready-')).map(k => caches.delete(k)));
+    const r = 'serviceWorker' in navigator && await navigator.serviceWorker.getRegistration();
+    if (r) await r.update().catch(() => {});
+    location.reload();
+  } catch (e) { m.textContent = 'Could not reach the server. Try again later.'; }
 }
 </script>
 

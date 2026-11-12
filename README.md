@@ -61,7 +61,7 @@ Sign-in does not work when `index.html` is opened directly as a file; the app th
 
 ## Releasing a new version
 
-After changing any file, bump `VERSION` in `sw.js` (e.g. `"v1"` → `"v2"`) and upload the changed files. Installed apps pick up the new version on the next start after the one that downloads it.
+After changing any file, bump `VERSION` in `sw.js` (e.g. `"v1"` → `"v2"`) and set `APP_VERSION` at the top of the script in `index.html` to the same value, and upload the changed files. Installed apps pick up the new version on the next start after the one that downloads it.
 
 ## Editing the plan
 
