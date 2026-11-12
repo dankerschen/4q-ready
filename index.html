@@ -59,6 +59,7 @@ label.check input{width:24px;height:24px;flex:none}
 .ex .reps{font-weight:600;font-variant-numeric:tabular-nums}
 button.ex{grid-template-columns:76px 1fr auto;width:100%;font:inherit;font-size:15px;color:inherit;background:none;border:0;text-align:left;cursor:pointer;align-items:start;min-height:32px}
 .ex .exi{width:20px;height:20px;border-radius:50%;border:1px solid var(--line);color:var(--muted);font-size:12px;font-weight:700;font-style:italic;text-align:center;line-height:18px}
+.sndrow{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--line)} .sndrow .btn{min-width:44px;padding:8px 10px}
 .ex .how{grid-column:2;font-size:13px;color:var(--muted);margin-top:-2px}
 .tag{display:inline-block;font-size:12px;padding:1px 8px;border-radius:99px;background:var(--chip);color:var(--muted);margin-left:4px;white-space:nowrap}
 .tag.w{background:var(--soft);color:var(--accent)}
@@ -440,7 +441,7 @@ const PLAN = {
     'Yoga': 'A short Down Dog practice with focus on hips, hamstrings, ankles/calves and back.',
     'Rolls': 'Gentle forward and backward rolls on a soft surface, over the shoulder rather than the neck.',
     'Standing Front Kicks': 'Controlled straight-leg kick to the front, hand reaching for the toes, standing tall.',
-    'Table Tap to Compr. Slide': 'From the reverse table (hips up, facing the ceiling) tap one hand to the opposite foot, then sit through and slide the legs out long, lifting them briefly off the floor.',
+    'Table Tap to Compr. Slide': 'From the reverse table (hips up, facing the ceiling) tap one hand to the opposite foot. Then, with both hands planted on the floor, press down and pull the hips back through between the hands. The hands stay where they are; only the hips move.',
     'Wrists 4 directions': 'On all fours, load the wrists gently with the fingers pointing forward, out, back and in.',
     'Floor Get-Ups': 'Lie down on the back and stand up again, using as little hand support as you can.',
     'Turkish Get-Up': 'From lying to standing with a kettlebell held overhead on a straight arm, and back down. Parked until your physio agrees.',
@@ -791,7 +792,9 @@ function renderOptions() {
     <h3>On this device</h3>
     <label class="check"><input type="checkbox" data-set="keepAwake" ${settings.keepAwake ? 'checked' : ''}><span>Keep the screen awake${'wakeLock' in navigator ? '' : ' (not supported in this browser)'}</span></label>
     <label class="check"><input type="checkbox" data-set="autoRest" ${settings.autoRest ? 'checked' : ''}><span>Start the rest timer when I tick a set</span></label>
-    <label class="check"><input type="checkbox" data-set="sound" ${settings.sound ? 'checked' : ''}><span>Beep when a timer ends</span></label>`;
+    <label class="check"><input type="checkbox" data-set="sound" ${settings.sound ? 'checked' : ''}><span>Sounds on</span></label>
+    <div id="optSounds"></div>`;
+  renderSounds();
 }
 $('#optBtn').addEventListener('click', () => { $('#optDlg').showModal(); renderOptions(); });
 $('#optBody').addEventListener('click', e => {
@@ -809,10 +812,13 @@ $('#optBody').addEventListener('click', e => {
     if (u && !isHttps(u)) { m.textContent = 'That does not look like a link (it should start with https://).'; return; }
     data.yogaLink = { url: u, t: now() }; persist(); render(); m.textContent = u ? 'Saved.' : 'Removed; the default is used.';
   }
+  else if (act === 'snd-test') sound(b.dataset.v, true);
+  else if (act === 'snd-reset') { delete sounds[b.dataset.v]; soundStore(b.dataset.v, null).catch(() => {}); soundMsg = 'Back to the default.'; renderSounds(); }
 });
 $('#optBody').addEventListener('change', e => {
   const k = e.target.dataset.set;
   if (k) { settings[k] = e.target.checked; saveSettings(); if (k === 'keepAwake') wakeLockSync(); return render(); }
+  if (e.target.dataset.snd) { if (e.target.files[0]) soundChoose(e.target.dataset.snd, e.target.files[0]); return; }
   if (e.target.id !== 'calFile' || !e.target.files[0]) return;
   const r = new FileReader();
   r.onload = () => {
@@ -984,7 +990,7 @@ function timersCard() {
     <details><summary>Timer settings</summary>
     <label class="check"><input type="checkbox" data-act="set" data-k="autoRest" ${settings.autoRest ? 'checked' : ''}><span>Start the rest timer when I tick a set</span></label>
     <label class="check"><input type="checkbox" data-act="set" data-k="keepAwake" ${settings.keepAwake ? 'checked' : ''}><span>Keep the screen awake${'wakeLock' in navigator ? '' : ' (not supported in this browser)'}</span></label>
-    <label class="check"><input type="checkbox" data-act="set" data-k="sound" ${settings.sound ? 'checked' : ''}><span>Beep when a timer ends</span></label></details></div>`;
+    <label class="check"><input type="checkbox" data-act="set" data-k="sound" ${settings.sound ? 'checked' : ''}><span>Sounds on</span></label></details></div>`;
 }
 function renderToday() {
   const date = viewDate, di = dayInfo(date), { wi, type } = di, isToday = date === todayIso();
@@ -1140,15 +1146,71 @@ function beep(n = 1, freq = 880) {
     }
   } catch (e) {}
 }
+/* ---------- sounds per event; each can be replaced by your own file (kept on this device, in IndexedDB) ---------- */
+const SOUND_EVENTS = {                       // id: [label, default beeps, pitch]; 0 beeps = silent unless you choose a file
+  rest: ['Rest timer done', 2, 880], hard: ['Interval: hard starts', 2, 990], easy: ['Interval: easy starts', 1, 660],
+  ivDone: ['Interval timer finished', 3, 660], round: ['Physio round counted', 0, 0], session: ['Session finished', 0, 0],
+};
+const SOUND_MAX = 2 * 1024 * 1024;
+const sounds = {};                           // id: { name, bytes (ArrayBuffer), buffer (decoded, once played) }
+let soundMsg = '';
+const soundDb = () => new Promise((res, rej) => {
+  const r = indexedDB.open('workout-sounds', 1);
+  r.onupgradeneeded = () => r.result.createObjectStore('files');
+  r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+});
+async function soundStore(id, val) {
+  const db = await soundDb();
+  return new Promise((res, rej) => { const tx = db.transaction('files', 'readwrite'); val ? tx.objectStore('files').put(val, id) : tx.objectStore('files').delete(id); tx.oncomplete = res; tx.onerror = () => rej(tx.error); });
+}
+async function soundsLoad() {
+  try {
+    const db = await soundDb(), st = db.transaction('files').objectStore('files');
+    await Promise.all(Object.keys(SOUND_EVENTS).map(id => new Promise(res => { const g = st.get(id); g.onsuccess = () => { if (g.result) sounds[id] = { name: g.result.name, bytes: g.result.bytes }; res(); }; g.onerror = res; })));
+  } catch (e) {}
+}
+function audio() { audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)(); if (audioCtx.state === 'suspended') audioCtx.resume(); return audioCtx; }
+const decode = s => s.buffer ? Promise.resolve(s.buffer) : audio().decodeAudioData(s.bytes.slice(0)).then(b => (s.buffer = b));
+/* Call on a tap that starts something: browsers only allow sound after a touch, so wake the audio and decode your files now. */
+function unlockAudio() { if (!settings.sound) return; try { audio(); Object.values(sounds).forEach(s => decode(s).catch(() => {})); } catch (e) {} }
+function sound(id, force) {
+  const ev = SOUND_EVENTS[id], own = sounds[id]; if (!ev) return;
+  if (!settings.sound && !force) { if (ev[1] && navigator.vibrate) try { navigator.vibrate(200); } catch (e) {} return; }
+  if (!own) { if (ev[1]) beep(ev[1], ev[2]); return; }
+  if (navigator.vibrate) try { navigator.vibrate(200); } catch (e) {}
+  decode(own).then(buf => { const src = audio().createBufferSource(); src.buffer = buf; src.connect(audioCtx.destination); src.start(); }).catch(() => { if (ev[1]) beep(ev[1], ev[2]); });
+}
+function renderSounds() {
+  const el = $('#optSounds'); if (!el) return;
+  el.innerHTML = `<h3>Sounds</h3>
+    <p class="small muted" style="margin:4px 0 8px">Choose your own sound file for each event (MP3, WAV, M4A or OGG, up to 2 MB). Files stay on this device only.</p>
+    ${Object.entries(SOUND_EVENTS).map(([id, [label, n]]) => `<div class="sndrow"><span><b>${label}</b><span class="small muted" style="display:block">${sounds[id] ? esc(sounds[id].name) : n ? 'Default beep' : 'Silent'}</span></span>
+      <span class="row" style="flex-wrap:nowrap;gap:6px"><button class="btn" data-act="snd-test" data-v="${id}" aria-label="Play: ${label}" ${sounds[id] || n ? '' : 'disabled'}>▶</button>
+      <label class="btn" style="cursor:pointer">Choose<input type="file" accept="audio/*" data-snd="${id}" hidden></label>
+      ${sounds[id] ? `<button class="btn" data-act="snd-reset" data-v="${id}" aria-label="Remove my sound for: ${label}">✕</button>` : ''}</span></div>`).join('')}
+    <p class="small" style="margin:6px 0 0">${esc(soundMsg)}</p>`;
+}
+async function soundChoose(id, file) {
+  soundMsg = '';
+  if (file.size > SOUND_MAX) soundMsg = 'That file is larger than 2 MB. Please choose a shorter sound.';
+  else try {
+    const bytes = await file.arrayBuffer(), s = { name: file.name, bytes };
+    await decode(s);                                           // also proves the browser can play it
+    await soundStore(id, { name: file.name, bytes }); sounds[id] = s; sound(id, true);
+    soundMsg = `Saved "${file.name}" for: ${SOUND_EVENTS[id][0]}.`;
+  } catch (e) { soundMsg = 'This file could not be read as a sound on this device. Try an MP3 or WAV file.'; }
+  renderSounds();
+}
+soundsLoad();
 const mmss = s => `${Math.floor(s / 60)}:${pad(Math.floor(s % 60))}`;
 const rest = { end: 0, timer: null };
 function restStart(secs) {
-  if (audioCtx == null && settings.sound) beep(0);           // unlock audio on this tap
+  unlockAudio();                                             // unlock audio on this tap
   rest.end = Date.now() + secs * 1000; clearInterval(rest.timer); rest.timer = setInterval(restTick, 250); restTick();
 }
 function restTick() {
   const left = Math.ceil((rest.end - Date.now()) / 1000), bar = $('#restBar');
-  if (left <= 0) { clearInterval(rest.timer); rest.timer = null; bar.hidden = true; if (rest.end) beep(2); rest.end = 0; return; }
+  if (left <= 0) { clearInterval(rest.timer); rest.timer = null; bar.hidden = true; if (rest.end) sound('rest'); rest.end = 0; return; }
   bar.hidden = false; $('#restLeft').textContent = mmss(left);
 }
 function restStop() { rest.end = 0; clearInterval(rest.timer); rest.timer = null; $('#restBar').hidden = true; }
@@ -1169,7 +1231,7 @@ function ivOpen(work, restS, rounds, pid, go) {
 }
 function ivStart() {
   Object.assign(iv, ivRead());
-  if (audioCtx == null && settings.sound) beep(0);
+  unlockAudio();
   iv.start = Date.now(); iv.key = ''; clearInterval(iv.timer); iv.timer = setInterval(ivTick, 200); $('#ivCfg').hidden = true; $('#ivPre').hidden = true; $('#ivMsg').textContent = ''; ivTick();
 }
 $('#ivSave').onclick = () => {
@@ -1194,11 +1256,11 @@ function ivTick() {
   if (el < lead) { phase = 'GET READY'; left = lead - el; }
   else {
     const e = el - lead; round = Math.floor(e / cyc);
-    if (round >= iv.rounds) { beep(3, 660); return ivStop('Done'); }
+    if (round >= iv.rounds) { sound('ivDone'); return ivStop('Done'); }
     const p = e - round * cyc; phase = p < iv.work ? 'HARD' : 'EASY'; left = p < iv.work ? iv.work - p : cyc - p; round++;
   }
   const key = phase + round;
-  if (key !== iv.key) { if (iv.key) beep(phase === 'HARD' ? 2 : 1, phase === 'HARD' ? 990 : 660); iv.key = key; }
+  if (key !== iv.key) { if (iv.key) sound(phase === 'HARD' ? 'hard' : 'easy'); iv.key = key; }
   $('#ivDlg').classList.toggle('hard', phase === 'HARD');
   $('#ivPhase').textContent = phase; $('#ivBig').hidden = false; $('#ivBig').textContent = left > 60 ? mmss(Math.ceil(left)) : Math.ceil(left);
   $('#ivRound').textContent = round ? `Round ${round} of ${iv.rounds}` : `${iv.rounds} × ${ivDur(iv.work)} hard / ${ivDur(iv.rest)} easy`;
@@ -1252,11 +1314,11 @@ view.addEventListener('click', async e => {
       if (added && settings.autoRest) restStart(PLAN.restSeconds || 45);
       break; }
     case 'toggle-block': { const k = date + ':' + b.dataset.i; openBlocks.has(k) ? openBlocks.delete(k) : openBlocks.add(k); break; }
-    case 'finish': touchSession(date, s => { s.status = s.status === 'done' ? null : 'done'; }); break;
+    case 'finish': touchSession(date, s => { s.status = s.status === 'done' ? null : 'done'; if (s.status) sound('session'); }); break;
     case 'skip': touchSession(date, s => { s.status = s.status === 'skipped' ? null : 'skipped'; }); break;
     case 'pain': setPain(date, b.dataset.field, +v); break;
     case 'step': data.achilles = { step: +v, t: now() }; persist(); break;
-    case 'core-round': setCore(date, c => { c.rounds = (c.rounds || 0) + 1; c.checked = []; }); break;
+    case 'core-round': setCore(date, c => { c.rounds = (c.rounds || 0) + 1; c.checked = []; }); sound('round'); break;
     case 'core-undo': setCore(date, c => { c.rounds = Math.max(0, (c.rounds || 0) - 1); }); break;
     case 'yoga': data.yoga[date] = { done: !(data.yoga[date] && data.yoga[date].done), t: now() }; persist(); break;
     case 'routine': return info(`<h2 style="margin-top:0">Short routine (10–20 min)</h2>` + PLAN.yoga.routine.map(id => { const bl = PLAN.blocks[id]; return bl ? `<h3 style="margin:10px 0 4px">${esc(bl.name)}</h3>` + bl.items.map(it => `<div class="ex"><span class="reps">${esc(it.reps)}</span><span>${esc(it.name)}</span>${it.how || explainOf(it.name) ? `<span class="how">${esc(it.how || explainOf(it.name))}</span>` : ''}</div>`).join('') : ''; }).join(''));
@@ -1303,12 +1365,12 @@ view.addEventListener('input', e => { const el = e.target; if ((el.dataset.field
 view.addEventListener('change', e => {
   const el = e.target, act = el.dataset.act, f = el.dataset.field, date = viewDate;
   if (act === 'core-check') {
-    const i = +el.dataset.i, n = data.physio.current ? data.physio.current.lines.length : 0;
+    const i = +el.dataset.i, n = data.physio.current ? data.physio.current.lines.length : 0; unlockAudio();
     setCore(date, c => { c.checked = (el.checked ? [...new Set([...c.checked, i])] : c.checked.filter(x => x !== i)).filter(x => x < n); });
     // Every box ticked: count the round and clear the ticks (after a moment, so the last tick is seen).
     if (n && coreOf(date).checked.length >= n) setTimeout(() => {
       if (coreOf(date).checked.length < n) return;
-      setCore(date, c => { c.rounds = (c.rounds || 0) + 1; c.checked = []; }); render();
+      setCore(date, c => { c.rounds = (c.rounds || 0) + 1; c.checked = []; }); sound('round'); render();
     }, 2000);
     return;
   }
