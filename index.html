@@ -57,6 +57,8 @@ label.check input{width:24px;height:24px;flex:none}
 .circle.on::after{content:"✓"}
 .ex{display:grid;grid-template-columns:76px 1fr;gap:8px;padding:4px 0;font-size:15px}
 .ex .reps{font-weight:600;font-variant-numeric:tabular-nums}
+button.ex{grid-template-columns:76px 1fr auto;width:100%;font:inherit;font-size:15px;color:inherit;background:none;border:0;text-align:left;cursor:pointer;align-items:start;min-height:32px}
+.ex .exi{width:20px;height:20px;border-radius:50%;border:1px solid var(--line);color:var(--muted);font-size:12px;font-weight:700;font-style:italic;text-align:center;line-height:18px}
 .ex .how{grid-column:2;font-size:13px;color:var(--muted);margin-top:-2px}
 .tag{display:inline-block;font-size:12px;padding:1px 8px;border-radius:99px;background:var(--chip);color:var(--muted);margin-left:4px;white-space:nowrap}
 .tag.w{background:var(--soft);color:var(--accent)}
@@ -220,7 +222,8 @@ main{padding-top:14px} .card{box-shadow:0 1px 2px rgba(60,30,0,.04)}
 
    blocks : the block library (like the top of the old spreadsheets).
             item fields: reps, name, how (one-line explanation), achilles (minimum Achilles step, 1–4),
-            fallback (shown while your Achilles step is lower), intense (dropped in the light version),
+            fallback (shown while your Achilles step is lower), fallback1 (shown at step 1 when the
+            fallback itself needs step 2), intense (dropped in the light version),
             physioCheck (flagged on the Physio core screen as a possible clash).
             block fields: load (shows a "kg used" box), intense + lightAlt (block swapped in the light version),
             interval {work, rest, rounds} (adds an interval-timer button), test (shows the max-test inputs).
@@ -261,7 +264,7 @@ const PLAN = {
       { reps: '12', name: 'Bent-knee calf raise holding KB', achilles: 2, fallback: 'Bent-knee calf raise, bodyweight' },
       { reps: '6/side', name: 'Eccentric calf lower', how: 'Up on two feet, lower slowly (4 s) on one.', achilles: 2, fallback: 'Slow calf raise, two legs' } ] },
     calf4: { name: 'Calf & Achilles 4', load: true, items: [
-      { reps: '8/side', name: 'Single-leg calf raise', how: 'Slow and full range; hold the 12 kg in the same-side hand when 8 feels easy.', achilles: 3, fallback: 'Calf raise holding 12 kg, two legs' },
+      { reps: '8/side', name: 'Single-leg calf raise', how: 'Slow and full range; hold the 12 kg in the same-side hand when 8 feels easy.', achilles: 3, fallback: 'Calf raise holding 12 kg, two legs', fallback1: 'Slow calf raise, two legs' },
       { reps: '12', name: 'Bent-knee calf raise holding 12 kg', achilles: 2, fallback: 'Bent-knee calf raise, bodyweight' },
       { reps: '8/side', name: 'Eccentric calf lower', achilles: 2, fallback: 'Slow calf raise, two legs' } ] },
     calfIso: { name: 'Calf isometrics', items: [
@@ -310,11 +313,11 @@ const PLAN = {
       { reps: '2/side', name: 'Shuffle-to-stop', how: 'Three lateral shuffles, then stick the stop for 2 s; deceleration practice.' },
       { reps: '10 m', name: 'Backpedal, then turn and jog' } ] },
     move4: { name: 'Accel & COD 3', intense: true, lightAlt: 'move1', items: [
-      { reps: '10–15 m', name: 'Acceleration at 75–80%, walk back', achilles: 3, fallback: 'Acceleration at 70%, 10 m' },
+      { reps: '10–15 m', name: 'Acceleration at 75–80%, walk back', achilles: 3, fallback: 'Acceleration at 70%, 10 m', fallback1: 'Brisk walk, 10 m' },
       { reps: '1', name: '5-4-5 shuttle steps', how: 'Your old 5-4-5 pattern as short floor shuttles: 5 steps out, plant, 4 back, plant, 5 out.', achilles: 3, fallback: 'Shuffle-to-stop, 2/side' },
       { reps: '10 m', name: 'Backpedal, then turn and jog' } ] },
     pogo: { name: 'Low hops', intense: true, items: [
-      { reps: '10', name: 'Low pogo hops', how: 'Tiny two-foot hops, stiff ankles, quiet landings. Stop at any Achilles pain.', achilles: 4, fallback: 'Low A-skips, 10 m' } ] },
+      { reps: '10', name: 'Low pogo hops', how: 'Tiny two-foot hops, stiff ankles, quiet landings. Stop at any Achilles pain.', achilles: 4, fallback: 'Low A-skips, 10 m', fallback1: 'Marching A, 10 m' } ] },
     intervals6: { name: 'Treadmill intervals', intense: true, interval: { work: 30, rest: 60, rounds: 6 }, items: [
       { reps: '5 min', name: 'Easy jog warm-up' },
       { reps: '6×', name: '30 s hard / 60 s easy', how: 'Hard: heart rate 150–165. Easy: back to 120–130. Raise speed moderately, no all-out sprints on the belt.', achilles: 3, fallback: 'Brisk incline walk: 30 s fast / 60 s easy' } ] },
@@ -333,10 +336,115 @@ const PLAN = {
       { reps: '10 min', name: 'Yoga (Down Dog): hips, hamstrings, ankles/calves, back' }, { reps: '2', name: 'Rolls (front/back)' },
       { reps: '10', name: 'Standing Front Kicks' }, { reps: '5', name: 'Table Tap to Compr. Slide' },
       { reps: '10', name: 'Wrists 4 directions' }, { reps: '5', name: 'Floor Get-Ups' } ] },
+    // Extra blocks: in the library for swapping in, not used in the weeks yet (extra: true shows a tag).
+    footAnkle: { name: 'Foot & Ankle', extra: true, items: [
+      { reps: '8 × 5s', name: 'Short foot', how: 'Standing, pull the ball of the foot towards the heel without curling the toes, so the arch lifts. Hold 5 s. Builds the small foot muscles that take load off the Achilles.' },
+      { reps: '10', name: 'Toe yoga', how: 'Lift only the big toe while the others stay down, then the other way round. Slow and deliberate.' },
+      { reps: '10 m', name: 'Heel walks', how: 'Walk on the heels with the toes pulled up. Works the shin muscles and puts no load on the Achilles.' },
+      { reps: '4/side', name: 'Single-leg balance reach', how: 'Stand on one leg and tap the other foot lightly forward, sideways and back. Keep the standing knee over the foot.' } ] },
+    kneeShin: { name: 'Knee & Shin', extra: true, items: [
+      { reps: '15', name: 'Tibialis raise at the wall', how: 'Lean back against a wall, heels about a foot length away, and pull the toes up as high as you can. Lower slowly.' },
+      { reps: '30–45s', name: 'Wall sit', how: 'Back flat on the wall, knees at about 90°, weight through the whole foot. An isometric hold that is kind to the knee tendons.' },
+      { reps: '6/side', name: 'Slow step-down', how: 'Stand on a low step and lower the other heel to the floor over 3 s, knee tracking over the middle toes. Use a hand on the wall for balance.' },
+      { reps: '8/side', name: 'Hamstring bridge walk-out', how: 'From a hip bridge, walk the heels away in small steps and back again while the hips stay up.' } ] },
+    hipsGlutes: { name: 'Hips & Glutes', extra: true, load: true, items: [
+      { reps: '6/side', name: 'Cossack squat', how: 'Wide stance, sit down over one leg while the other stays straight with the toes up. Hold a light kettlebell in front as a counterweight.' },
+      { reps: '12/side', name: 'Side-lying leg raise', how: 'Lie on your side, bottom knee bent, lift the top leg slightly behind you with the toes pointing forward. Slow down.' },
+      { reps: '5/side', name: 'Hip airplane', how: 'Hinge forward on one leg holding a support, then open and close the hips slowly like a door. Trains hip control for stops and turns.' },
+      { reps: '20s/side', name: 'Single-leg bridge hold', how: 'Hip bridge on one leg, hips level, hold. Push through the heel.' } ] },
+    trxUpper: { name: 'TRX Upper', extra: true, items: [
+      { reps: '10', name: 'TRX Rows', how: 'Body straight like a plank, pull the chest to the handles, lower under control. Walk the feet forward to make it harder.' },
+      { reps: '8', name: 'TRX Y-raise', how: 'Lean back a little with straight arms and raise them into a Y overhead. Small lean; it gets hard quickly.' },
+      { reps: '10', name: 'TRX face pull', how: 'Pull the handles towards the forehead with the elbows high and wide, squeezing the shoulder blades together.' },
+      { reps: '8–10', name: 'TRX push-up, hands in the straps', how: 'Push-up with the hands in the handles, body straight. The unstable straps make the shoulders and trunk work harder; stand more upright to make it easier.' } ] },
+    kbLunge: { name: 'KB Lunge & Press', extra: true, load: true, items: [
+      { reps: '8/side', name: 'Goblet reverse lunge', how: 'Bell at the chest, step back into a lunge, push through the front heel to stand. Stepping back is easier on the knee and the Achilles than stepping forward.' },
+      { reps: '8/side', name: 'Suitcase deadlift', how: 'Bell beside one foot, hinge and stand tall without leaning towards the bell.' },
+      { reps: '6–8/side', name: 'Half-kneeling press', how: 'One knee down, press the bell overhead on the side of the down knee. Ribs down, no leaning back.' },
+      { reps: '20 m', name: 'Front-rack carry', how: 'Walk with the bell resting on the forearm at the shoulder, elbow in, body upright.' } ] },
     // Kept out of the weeks on purpose (see Physio core screen); add them back only after asking your physio.
     parked: { name: 'Parked exercises', items: [
       { reps: '4', name: 'Turkish Get-Up', physioCheck: 'long loaded lever through the trunk' },
       { reps: '30s', name: 'Superman variations', physioCheck: 'repeated low-back extension' } ] },
+  },
+  /* Short explanations, shown when an exercise is tapped. Looked up by exercise name (or the start of it) when
+     the item above has no `how` of its own. */
+  explain: {
+    'Neck side to side': 'Slowly tilt the ear towards the shoulder, left and right. No forcing.',
+    'Neck circles': 'Slow half circles from shoulder to shoulder through the front, then the other way.',
+    'Shoulder turns': 'Big, slow arm circles from the shoulder, forwards and backwards.',
+    'Wrists & forearms': 'Circle the wrists, then gently stretch the palm side and the back of the forearm.',
+    'Broomsticks': 'Hold a stick wide in both hands and pass it over the head and behind the back with straight arms, then back. Opens the shoulders.',
+    '90/90 hips': 'Sit with both knees bent at 90°, one leg in front and one to the side, and rotate the knees over to the other side without using the hands if you can.',
+    'Thoracic rots.': 'On all fours, one hand behind the head: rotate the elbow up to the ceiling and back down. The movement comes from the upper back.',
+    'Leg swings': 'Hold a support and swing one leg forwards and backwards, then side to side. Loose and controlled.',
+    'Bodyweight squats': 'Feet about shoulder width, sit down between the heels, chest up, knees follow the toes.',
+    'Down Dog to Cobra': 'Flow from the downward dog (hips high, heels reaching down) to the cobra (hips low, chest up) and back.',
+    'Isometric calf hold': 'Rise onto the balls of both feet to mid-height and hold still. Calms the tendon and loads it without movement.',
+    'Slow calf raise': '3 s up, 3 s down through the full range on a flat floor, both feet unless stated.',
+    'Bent-knee calf raise': 'The same raise with the knees bent about 30°, which targets the deeper soleus muscle.',
+    'Calf raise holding': 'Slow two-leg calf raise with the kettlebell in one hand or at the chest: 3 s up, 1 s pause, 3 s down.',
+    'Eccentric calf lower': 'Go up on two feet, shift onto one and lower slowly for about 4 s.',
+    'Single-leg calf raise': 'Slow, full-range raise on one leg, fingertips on a wall for balance.',
+    '2H Swings': 'Two-hand kettlebell swing: hinge at the hips, snap them forward and let the bell float to chest height. The arms only guide.',
+    '1H Swing': 'The swing with one hand on the bell; keep the shoulders square and do not let the bell twist you.',
+    'Goblet Squat': 'Hold the bell at the chest, sit down between the heels with the chest up, then stand. Slower tempo where stated.',
+    'RDL': 'Romanian deadlift: soft knees, push the hips back with a flat back until the hamstrings pull, then stand tall.',
+    'Bent-Over Row': 'Hinge forward with a flat back and pull the bell(s) to the lower ribs. Lower under control.',
+    '1-arm': 'One-arm row: hinge forward, one hand on a support, pull the bell to the hip without rotating the trunk.',
+    'Split Squat': 'Long stance, both feet pointing forward, lower the back knee straight down and stand up again. Hold a kettlebell where stated.',
+    'Single-leg RDL': 'Hinge on one leg with the bell in the opposite hand, back flat, hips level.',
+    'Swing, Clean, Press, 1H Squat': 'One flow with one bell: swing, clean it to the shoulder, press overhead, then squat with the bell at the shoulder. Finish the reps, then change sides.',
+    'Curl, Halo, Pullover': 'Three moves in a row: biceps curl holding the bell by the horns, halo (circle the bell closely around the head), pullover lying on the back.',
+    'Floor Press': 'Lie on the back with knees bent and press the bell(s) up from the floor; the upper arms touch down lightly between reps.',
+    'Mace 360s': 'Swing the mace in a full circle behind the back and return it to the front. Ribs down, movement from the shoulders.',
+    'Mace 300s': 'Like the 360, but the mace goes over one shoulder and comes back to the same side.',
+    'Uppercuts': 'Drive the mace head upwards and across the body with a small turn of the hips, like an uppercut.',
+    'Mace Split Squat': 'Split squat with the mace held upright in front of the chest.',
+    'Ying Yang': 'Flowing figure of the mace from one hip across the body to the other shoulder and back, shifting the weight from foot to foot.',
+    'Lateral Lunge': 'Step out to the side, sit back over that leg while the other stays straight, then push back to the middle.',
+    'Lunge Chop & Swing': 'Step into a lunge and bring the mace diagonally down across the front knee, then swing it back up as you return.',
+    'Grave Digger': 'A shovelling movement: hinge, scoop the mace head down by the front foot and lift it up over the opposite shoulder.',
+    'Single Leg Hip Bridge': 'Lie on the back, one foot on the floor, lift the hips until they are level. Push through the heel.',
+    'Push-ups': 'Body straight like a plank, chest down to about fist height, elbows at roughly 45°. Raise the hands on a bench to make it easier.',
+    'TRX Rows': 'Body straight like a plank, pull the chest to the handles, lower under control. Walk the feet forward to make it harder.',
+    'Suitcase Carry': 'Walk with the kettlebell in one hand like a suitcase, standing tall without leaning. Change hands for the way back.',
+    'Dead bug': 'On the back, arms up and knees over the hips: lower the opposite arm and leg slowly while the lower back stays on the floor.',
+    'Side Plank': 'On the forearm and the side of the foot (or the knee), body in one straight line.',
+    'Dead Hang': 'Hang from the bar with straight arms, shoulders active (pulled slightly away from the ears).',
+    'Scapular Pull-ups': 'From the hang, pull the shoulder blades down so the body rises a few centimetres. The arms stay straight.',
+    'Negative Pull-ups': 'Jump or step to the top position and lower yourself as slowly as you can.',
+    'Assisted Pull-ups': 'Pull-up with help: one foot on a chair, or feet on the floor under a low bar or the TRX. Full range.',
+    'Strict pull-ups': 'From a full hang to the chin over the bar, no swing.',
+    'Marching A': 'Walk tall, knee up to hip height, land softly on the mid-foot.',
+    'Backward walk': 'Walk backwards with long steps, reaching back with the toes. Gentle on the knees and a good calf warm-up.',
+    'Lateral shuffle': 'Low hips, feet never cross, push off the trailing leg.',
+    'Step and stick': 'One quick step forward, then hold the landing still for 2 s.',
+    'Low A-skips': 'Small, quiet skips with the knee up, barely leaving the floor.',
+    'Acceleration': 'Start from a slight forward lean and build speed smoothly to the stated effort over the distance. Walk back as rest.',
+    'Brisk walk': 'Fast, purposeful walking with an active arm swing.',
+    'Brisk incline walk': 'Treadmill at an incline: 30 s fast walking, 60 s easy. The low-impact stand-in for the running intervals.',
+    'Backpedal': 'Run backwards on the balls of the feet, hips low, short steps. Where stated, turn and jog out.',
+    'Shuffle-to-stop': 'Three lateral shuffles, then stop dead and hold for 2 s. Deceleration practice.',
+    '5-4-5 shuttle steps': 'Short floor shuttle: 5 steps out, plant, 4 back, plant, 5 out.',
+    'Low pogo hops': 'Tiny two-foot hops with stiff ankles and quiet landings. Stop at any Achilles pain.',
+    'Easy jog warm-up': 'Five minutes at a pace where you could still talk in full sentences.',
+    '30 s hard / 60 s easy': 'Hard: heart rate 150–165. Easy: back down to 120–130. No all-out sprints on the belt.',
+    '🐻': 'One round of the flow: bear crawl, downward dog, kick-through, ape (sideways squat hop on the hands), crab. Move slowly and keep the hips low.',
+    'Ankle CARs': 'Draw the biggest slow circle you can with the foot; only the ankle moves.',
+    'Calf wall stretch': 'Hands on the wall, back heel down. Straight knee for the upper calf, bent knee for the lower. Gentle; never push into Achilles pain.',
+    'Hamstring stretch': 'One leg forward with the heel down, hinge from the hips with a flat back until the back of the thigh pulls.',
+    'Knee → wall dorsiflexion': 'Foot a few centimetres from the wall, push the knee forward to touch the wall while the heel stays down.',
+    'Single leg balance': 'Stand on one leg with a soft knee. Close the eyes to make it harder.',
+    'Deep squat': 'Sit in the bottom of a squat, heels down, chest up; hold on to something if needed.',
+    'Yoga': 'A short Down Dog practice with focus on hips, hamstrings, ankles/calves and back.',
+    'Rolls': 'Gentle forward and backward rolls on a soft surface, over the shoulder rather than the neck.',
+    'Standing Front Kicks': 'Controlled straight-leg kick to the front, hand reaching for the toes, standing tall.',
+    'Table Tap to Compr. Slide': 'From the reverse table (hips up, facing the ceiling) tap one hand to the opposite foot, then sit through and slide the legs out long, lifting them briefly off the floor.',
+    'Wrists 4 directions': 'On all fours, load the wrists gently with the fingers pointing forward, out, back and in.',
+    'Floor Get-Ups': 'Lie down on the back and stand up again, using as little hand support as you can.',
+    'Turkish Get-Up': 'From lying to standing with a kettlebell held overhead on a straight arm, and back down. Parked until your physio agrees.',
+    'Superman variations': 'Lying face down, lift arms and legs off the floor. Parked until your physio agrees.',
   },
   weeks: [
     { n: 1, title: 'Re-entry', purpose: 'Get moving again without digging a hole: easy loads, short sessions, stop well before tired.', achillesStep: 1, days: {
@@ -531,6 +639,21 @@ function ask(msg, yes = 'Yes', no = 'Cancel') {
   });
 }
 function info(html) { $('#infoBody').innerHTML = html; $('#infoDlg').showModal(); }
+/* Exercise explanations: the item's own `how`, else PLAN.explain by exact name, else by the longest entry the name starts with. */
+function explainOf(name) {
+  const n = String(name).toLowerCase(); let best = '';
+  for (const k in PLAN.explain) { const l = k.toLowerCase(); if (n === l) return PLAN.explain[k]; if (n.startsWith(l) && k.length > best.length) best = k; }
+  return best ? PLAN.explain[best] : '';
+}
+const exRow = it => `<button class="ex" data-ex="${esc(it.name)}" data-reps="${esc(it.reps)}" data-how="${esc(it.how || '')}"${it.gated ? ' data-gated="1"' : ''}${it.physioCheck ? ` data-physio="${esc(it.physioCheck)}"` : ''}><span class="reps">${esc(it.reps)}</span><span>${esc(it.name)}${it.gated ? ' <span class="tag w">easier version</span>' : ''}${it.physioCheck ? ' <span class="tag w">ask physio</span>' : ''}</span><span class="exi" aria-hidden="true">i</span></button>`;
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-ex]'); if (!b) return;
+  const d = b.dataset, base = explainOf(d.ex), text = d.gated ? base : (d.how || base);
+  info(`<h2 style="margin-top:0">${esc(d.ex)}</h2><p class="small muted" style="margin:0 0 8px">${esc(d.reps)}</p>
+    <p style="margin:0">${esc(text || 'No explanation yet.')}</p>
+    ${d.gated && d.how ? `<p class="note">${esc(d.how)}</p>` : ''}
+    ${d.physio ? `<p class="note">Ask your physio first: ${esc(d.physio)}.</p>` : ''}`);
+});
 document.addEventListener('click', e => { const b = e.target.closest('[data-close]'); if (b) b.closest('dialog').close(); });
 
 /* ================= Plan lookups ================= */
@@ -569,7 +692,7 @@ function sessionBlocks(day, light) {
     const sets = light ? Math.max(1, Math.ceil(entry.sets / 2)) : entry.sets;
     const items = lib.items.filter(it => !(light && it.intense)).map(it => {
       const gated = it.achilles && step < it.achilles;
-      return gated ? { ...it, name: it.fallback || it.name, how: `Easier version while your Achilles step is ${step} (plan drill: ${it.name}, step ${it.achilles}).`, gated: true } : it;
+      return gated ? { ...it, name: (step === 1 && it.fallback1) || it.fallback || it.name, how: `Easier version while your Achilles step is ${step} (plan drill: ${it.name}, step ${it.achilles}).`, gated: true } : it;
     });
     out.push({ i, id, lib, sets, items, note: swapped ? 'Light version: no accelerations' : entry.note });
   });
@@ -771,7 +894,7 @@ function blockHtml(b, s, editable) {
   return `<div class="block${complete ? ' done' : ''}">
     ${complete ? `<button class="blockhead" data-act="toggle-block" data-i="${b.i}" aria-expanded="${!folded}">${title}<span class="small muted">${folded ? 'show' : 'hide'}</span></button>`
       : `<div class="blockhead">${title}<span class="small muted">${b.sets > 1 ? done + ' of ' + b.sets + ' sets' : ''}</span></div>`}
-    ${folded ? '' : b.items.map(it => `<div class="ex"><span class="reps">${esc(it.reps)}</span><span>${esc(it.name)}${it.gated ? ' <span class="tag w">easier version</span>' : ''}${it.physioCheck ? ' <span class="tag w">ask physio</span>' : ''}</span>${it.how ? `<span class="how">${esc(it.how)}</span>` : ''}</div>`).join('')}
+    ${folded ? '' : b.items.map(exRow).join('')}
     ${test}
     <div class="spread" style="margin:8px 0"><div class="circles">${circles}</div>
       ${b.lib.load ? `<input class="short" placeholder="kg used" data-field="weight" data-i="${b.i}" value="${esc((s && s.weights && s.weights[b.i]) || '')}" aria-label="Weight used for ${esc(b.lib.name)}">` : ''}</div>
@@ -916,7 +1039,7 @@ function renderWeek() {
   const coreDays = DAYKEYS.filter((_, i) => coreOf(addDays(mon, i)).rounds > 0).length;
   const overview = PLAN.weeks.map(w => `<tr><td><b>${w.n}</b></td><td><b>${esc(w.title)}</b>${w.outline ? ' <span class="tag">outline</span>' : ''}<br><span class="small muted">${esc(w.purpose)}</span><br>
       <span class="small">${DAYKEYS.filter(k => w.days[k] && w.days[k].blocks).map(k => `${k[0].toUpperCase() + k.slice(1)} ${w.days[k].minutes} min${w.days[k].optional ? ' (opt.)' : ''}`).join(' · ')}</span></td></tr>`).join('');
-  const lib = Object.entries(PLAN.blocks).map(([id, b]) => `<details><summary>${esc(b.name)}</summary>${b.items.map(it => `<div class="ex"><span class="reps">${esc(it.reps)}</span><span>${esc(it.name)}</span>${it.how ? `<span class="how">${esc(it.how)}</span>` : ''}</div>`).join('')}</details>`).join('');
+  const lib = Object.entries(PLAN.blocks).map(([id, b]) => `<details><summary>${esc(b.name)}${b.extra ? ' <span class="tag">extra</span>' : ''}</summary>${b.items.map(exRow).join('')}</details>`).join('');
   return `<div class="card top"><div class="spread"><h2>${wi.pre ? 'Before the plan' : `Week ${wi.n}${wi.repeatOf ? ` (repeats week ${wi.repeatOf})` : ''}`}</h2>
       <span class="row"><button class="btn" data-act="week" data-v="-7" aria-label="Previous week">‹</button><button class="btn" data-act="week" data-v="7" aria-label="Next week">›</button></span></div>
     <p class="small muted" style="margin:0">${fmtDate(mon)} – ${fmtDate(addDays(mon, 6))}${wi.week ? ' · ' + esc(wi.week.title) : ''}</p>
@@ -926,7 +1049,7 @@ function renderWeek() {
     <p class="small muted" style="margin:10px 0 0">Physio core on ${coreDays} of 7 days this week.</p></div>
     <div class="card"><h2>Plan overview</h2><table>${overview}</table>
       <p class="small muted">Weeks 5–8 are an outline and will be adjusted after the week-4 test. After week ${PLAN.weeks.length} the app repeats weeks ${PLAN.repeatFrom}–${PLAN.weeks.length}.</p></div>
-    <div class="card"><h2>Block library</h2>${lib}</div>`;
+    <div class="card"><h2>Block library</h2><p class="small muted" style="margin:4px 0 8px">Tap an exercise for a short explanation. Blocks marked "extra" are not used in the weeks yet.</p>${lib}</div>`;
 }
 
 function renderPhysio() {
@@ -1136,7 +1259,7 @@ view.addEventListener('click', async e => {
     case 'core-round': setCore(date, c => { c.rounds = (c.rounds || 0) + 1; c.checked = []; }); break;
     case 'core-undo': setCore(date, c => { c.rounds = Math.max(0, (c.rounds || 0) - 1); }); break;
     case 'yoga': data.yoga[date] = { done: !(data.yoga[date] && data.yoga[date].done), t: now() }; persist(); break;
-    case 'routine': return info(`<h2 style="margin-top:0">Short routine (10–20 min)</h2>` + PLAN.yoga.routine.map(id => { const bl = PLAN.blocks[id]; return bl ? `<h3 style="margin:10px 0 4px">${esc(bl.name)}</h3>` + bl.items.map(it => `<div class="ex"><span class="reps">${esc(it.reps)}</span><span>${esc(it.name)}</span>${it.how ? `<span class="how">${esc(it.how)}</span>` : ''}</div>`).join('') : ''; }).join(''));
+    case 'routine': return info(`<h2 style="margin-top:0">Short routine (10–20 min)</h2>` + PLAN.yoga.routine.map(id => { const bl = PLAN.blocks[id]; return bl ? `<h3 style="margin:10px 0 4px">${esc(bl.name)}</h3>` + bl.items.map(it => `<div class="ex"><span class="reps">${esc(it.reps)}</span><span>${esc(it.name)}</span>${it.how || explainOf(it.name) ? `<span class="how">${esc(it.how || explainOf(it.name))}</span>` : ''}</div>`).join('') : ''; }).join(''));
     case 'rest': return restStart(+v);
     case 'interval': return ivOpen(+b.dataset.work, +b.dataset.rest, +b.dataset.rounds, b.dataset.pid || '', !!b.dataset.go);
     case 'physio-edit': { const c = data.physio.current; physioEdit = c ? c.lines.map((name, i) => ({ name, reps: (c.reps && c.reps[i]) || '' })) : [{ name: '', reps: '' }]; break; }
