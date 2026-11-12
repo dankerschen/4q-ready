@@ -59,7 +59,7 @@ label.check input{width:24px;height:24px;flex:none}
 .ex .reps{font-weight:600;font-variant-numeric:tabular-nums}
 button.ex{grid-template-columns:76px 1fr auto;width:100%;font:inherit;font-size:15px;color:inherit;background:none;border:0;text-align:left;cursor:pointer;align-items:start;min-height:32px}
 .ex .exi{width:20px;height:20px;border-radius:50%;border:1px solid var(--line);color:var(--muted);font-size:12px;font-weight:700;font-style:italic;text-align:center;line-height:18px}
-.sndrow{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--line)} .sndrow .btn{min-width:44px;padding:8px 10px}
+.sndrow{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--line)} .sndrow .btn{min-width:44px;padding:8px 10px;flex:none} .sndrow>span:first-child{flex:1 1 0;min-width:0} .sndrow>span:first-child>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ex .how{grid-column:2;font-size:13px;color:var(--muted);margin-top:-2px}
 .tag{display:inline-block;font-size:12px;padding:1px 8px;border-radius:99px;background:var(--chip);color:var(--muted);margin-left:4px;white-space:nowrap}
 .tag.w{background:var(--soft);color:var(--accent)}
@@ -79,7 +79,10 @@ nav button span{display:block;font-size:20px;line-height:1.2}
 #restBar[hidden]{display:none} [hidden]{display:none!important}
 #restBar b{font-size:26px;font-variant-numeric:tabular-nums;flex:1}
 #restBar .btn{min-height:40px}
-dialog{border:1px solid var(--line);border-radius:16px;background:var(--card);color:var(--ink);padding:18px;width:min(520px,calc(100vw - 24px));max-height:calc(100vh - 40px)}
+dialog{border:1px solid var(--line);border-radius:16px;background:var(--card);color:var(--ink);padding:18px;width:min(520px,calc(100vw - 24px));max-height:calc(100vh - 40px);max-height:calc(100dvh - 32px);overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+#optDlg[open],#acctDlg[open],#infoDlg[open]{display:flex;flex-direction:column;overflow:hidden}
+#optBody,#acctBody,#infoBody{overflow-x:hidden;flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y}
+#optDlg .dlg-row,#acctDlg .dlg-row,#infoDlg .dlg-row{flex:none}
 dialog::backdrop{background:rgba(0,0,0,.5)}
 .dlg-row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
 .or{text-align:center;color:var(--muted);font-size:13px;margin:10px 0}
@@ -150,7 +153,7 @@ button.blockhead{cursor:pointer}
 .card details summary{font-weight:400;color:var(--muted);font-size:14px}
 body:has(#restBar:not([hidden])){padding-bottom:calc(150px + env(safe-area-inset-bottom))}
 main{padding-top:14px} .card{box-shadow:0 1px 2px rgba(60,30,0,.04)}
-#optBtn{background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.4);color:#fff;min-width:44px;padding:8px 0;font-size:18px}
+#optBtn{background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.4);color:#fff;min-width:44px;padding:8px 0;display:inline-flex;align-items:center;justify-content:center}
 .game{display:grid;grid-template-columns:52px 1fr;gap:8px;padding:6px 0;border-top:1px solid var(--line)}
 .game b{color:var(--accent-text);font-variant-numeric:tabular-nums}
 #optBody h3{margin:16px 0 0;color:var(--accent-text)}
@@ -179,7 +182,7 @@ main{padding-top:14px} .card{box-shadow:0 1px 2px rgba(60,30,0,.04)}
 <body>
 <header>
   <div class="brand"><h1>4th Quarter Ready</h1><span id="syncStatus"></span></div>
-  <button class="btn" id="optBtn" aria-label="Options" title="Options">⚙</button>
+  <button class="btn" id="optBtn" aria-label="Options" title="Options"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 5h14M3 10h14M3 15h14"/></svg></button>
   <button class="btn" id="acctBtn" hidden>Sign in</button>
 </header>
 <main id="view"></main>

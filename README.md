@@ -37,7 +37,7 @@ The app uses its own Firebase project, `q-ready-5216b`. One-time setup in <https
 
 ## 3. Game calendar proxy (optional)
 
-In **Options (⚙) → Game calendar** each referee can paste the link to their own FLBB calendar (`webcal://www.luxembourg.basketball/…/XXXXXXXX.ics`). Game days then come from the calendar, and a week with a game from Monday to Friday, or with more than one game, switches to the lighter version by itself.
+In **Options (☰, top right) → Game calendar** each referee can paste the link to their own FLBB calendar (`webcal://www.luxembourg.basketball/…/XXXXXXXX.ics`). Game days then come from the calendar, and a week with a game from Monday to Friday, or with more than one game, switches to the lighter version by itself.
 
 The federation's server does not let a web page read the calendar directly, so the app needs the small proxy in `proxy/worker.js` (Cloudflare Worker, free plan). Without it, only the "Upload an .ics file" option works.
 
