@@ -55,7 +55,9 @@ The worker only fetches `.ics` files from `luxembourg.basketball`, only answers 
 - On the first sign-in in a browser, the app offers to merge the data already in that browser into the account.
 - While signed in, a copy stays in the browser so the app opens offline; it is removed on sign-out.
 - **Progress → Backup** exports everything as JSON and imports (merges) a file.
-- Settings (keep awake, auto rest timer, beep) stay per device.
+- On sign-out the calendar link and the Down Dog link stay on the device; the progress stays in the account only.
+- Calendar events that start with "Evaluation arbitre" (you supervise another referee) do not count as game days.
+- Settings (keep awake, auto rest timer, sounds, your own sound files) stay per device.
 
 Sign-in does not work when `index.html` is opened directly as a file; the app then runs signed out.
 

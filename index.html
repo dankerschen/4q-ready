@@ -25,7 +25,7 @@
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
-  padding-bottom:calc(76px + env(safe-area-inset-bottom))}
+  padding-bottom:calc(76px + var(--sab))}
 header{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line);
   padding:calc(8px + env(safe-area-inset-top)) 16px 8px;display:flex;align-items:center;gap:10px}
 header h1{font-size:18px;margin:0;flex:1;white-space:nowrap}
@@ -70,11 +70,11 @@ button.ex{grid-template-columns:76px 1fr auto;width:100%;font:inherit;font-size:
 .score.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:700}
 .note{background:var(--soft);border-radius:10px;padding:10px;margin:8px 0;font-size:14px}
 nav{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--card);border-top:1px solid var(--line);
-  display:grid;grid-template-columns:repeat(4,1fr);padding-bottom:env(safe-area-inset-bottom)}
+  display:grid;grid-template-columns:repeat(4,1fr);padding-bottom:var(--sab)}
 nav button{font:inherit;font-size:13px;min-height:60px;border:0;background:none;color:var(--muted);cursor:pointer}
 nav button.on{color:var(--accent);font-weight:700}
 nav button span{display:block;font-size:20px;line-height:1.2}
-#restBar{position:fixed;left:8px;right:8px;bottom:calc(68px + env(safe-area-inset-bottom));z-index:7;background:var(--ink);color:var(--bg);
+#restBar{position:fixed;left:8px;right:8px;bottom:calc(68px + var(--sab));z-index:7;background:var(--ink);color:var(--bg);
   border-radius:14px;padding:8px 12px;display:flex;align-items:center;gap:10px;box-shadow:0 4px 18px rgba(0,0,0,.3)}
 #restBar[hidden]{display:none} [hidden]{display:none!important}
 #restBar b{font-size:26px;font-variant-numeric:tabular-nums;flex:1}
@@ -151,7 +151,18 @@ button.blockhead{cursor:pointer}
 .scores{display:grid;grid-template-columns:repeat(11,1fr);gap:3px} .score{width:auto;min-width:0}
 @media (max-width:460px){ .scores{grid-template-columns:repeat(6,1fr);gap:4px} }
 .card details summary{font-weight:400;color:var(--muted);font-size:14px}
-body:has(#restBar:not([hidden])){padding-bottom:calc(150px + env(safe-area-inset-bottom))}
+/* Room for the phone's home bar only when installed as an app; in a browser tab the browser's own bar is already below. */
+:root{--sab:0px;--k-work:var(--accent-text);--k-yoga:#6741d9;--k-core:#0b7285}
+@media (display-mode:standalone){:root{--sab:env(safe-area-inset-bottom)}}
+@media (prefers-color-scheme: dark){:root{--k-yoga:#b197fc;--k-core:#3bc9db}}
+/* One colour per kind of work: workout, yoga / mobility, physio core. */
+.card.k-work{--k:var(--k-work)} .card.k-yoga{--k:var(--k-yoga)} .card.k-core{--k:var(--k-core)}
+.card.k-work,.card.k-yoga,.card.k-core{border-top:4px solid var(--k)}
+.card.k-work h2,.card.k-yoga h2,.card.k-core h2{color:var(--k)}
+.sd u{text-decoration:none;display:flex;gap:1px;font-size:10px;line-height:1.3;min-height:13px;align-items:center}
+.sd u .c,.legend .c{color:var(--k-core);font-weight:700}
+.legend{font-size:11px;color:var(--muted);margin:0 0 6px}
+body:has(#restBar:not([hidden])){padding-bottom:calc(150px + var(--sab))}
 main{padding-top:14px} .card{box-shadow:0 1px 2px rgba(60,30,0,.04)}
 #optBtn{background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.4);color:#fff;min-width:44px;padding:8px 0;display:inline-flex;align-items:center;justify-content:center}
 .game{display:grid;grid-template-columns:52px 1fr;gap:8px;padding:6px 0;border-top:1px solid var(--line)}
@@ -235,7 +246,7 @@ main{padding-top:14px} .card{box-shadow:0 1px 2px rgba(60,30,0,.04)}
             Days not listed are off days. type: 'game' | 'recovery'. optional: true = optional third session.
    After the last week the app repeats weeks from `repeatFrom` until you add more weeks.
    ===================================================================================== */
-const APP_VERSION = "v11";   // keep the same as VERSION in sw.js
+const APP_VERSION = "v12";   // keep the same as VERSION in sw.js
 const PLAN = {
   startDate: '2026-11-16',            // Monday of week 1
   repeatFrom: 5,                      // after the last week, cycle weeks 5…8
@@ -624,10 +635,18 @@ async function setAccount(user, cloudData, saveFn, loadFn, loadedOk) {
         data = mergeData(data, guest); unstore('data'); account.dirty = true;
       }
     }
+    // Links set in this browser while signed out (calendar, Down Dog) join the account if they are newer than the account's.
+    ['gameCal', 'yogaLink'].forEach(k => { const g = guest && guest[k]; if (g && (g.t || 0) > ((data[k] && data[k].t) || 0)) { data[k] = g; account.dirty = true; } });
     store('cache.' + user.uid, data);
     if (account.dirty) queueSave();
   } else {
-    if (account.user) unstore('cache.' + account.user.uid);
+    if (account.user) {
+      unstore('cache.' + account.user.uid);
+      // Signing out keeps the calendar and Down Dog links on this device; the progress stays in the account only.
+      const guest = normalize(load('data', null)); let changed = false;
+      ['gameCal', 'yogaLink'].forEach(k => { if (data[k] && data[k].url && !(guest[k] && guest[k].url)) { guest[k] = data[k]; changed = true; } });
+      if (changed) store('data', guest);
+    }
     Object.assign(account, { user: null, saveFn: null, loadFn: null, status: '', dirty: false, cloudLoaded: false });
     data = normalize(load('data', null));
   }
@@ -677,14 +696,15 @@ function weekInfo(dateIso) {
 }
 function dayInfo(dateIso) {
   const wi = weekInfo(dateIso);
-  let day = (wi.week && wi.week.days[dayKey(dateIso)]) || { type: 'off' };
+  let day = (wi.week && wi.week.days[dayKey(dateIso)]) || { type: 'off' }, evals = [];
   if (calActive()) {            // game days come from the calendar instead of the plan's fixed Saturday
-    const g = gamesOn(dateIso);
+    const all = gamesOn(dateIso), g = all.filter(x => !x.eval);
+    evals = all.filter(x => x.eval);   // referee evaluations: you supervise, so the day stays a normal training day
     if (g.length) day = { type: 'game', games: g, replaced: day.blocks ? day.title : null };
     else if (day.type === 'game') day = { type: 'off' };
   }
   const type = day.blocks ? 'session' : (day.type || 'off');
-  return { wi, day, type };
+  return { wi, day, type, evals };
 }
 const achStep = () => Math.min(4, Math.max(1, (data.achilles && data.achilles.step) || 1));
 /* The blocks to show for a session: full or light version, with Achilles-gated drills swapped for their fallback. */
@@ -714,7 +734,7 @@ const calActive = () => !!(calUrl() && games && games.url === calUrl());
 const gamesOn = d => calActive() ? games.list.filter(g => g.date === d) : [];
 function autoLight(mon) {
   if (!calActive()) return false;
-  const end = addDays(mon, 6), fri = addDays(mon, 4), wk = games.list.filter(g => g.date >= mon && g.date <= end);
+  const end = addDays(mon, 6), fri = addDays(mon, 4), wk = games.list.filter(g => !g.eval && g.date >= mon && g.date <= end);
   return wk.length > 1 || wk.some(g => g.date <= fri);
 }
 function parseICS(text) {
@@ -741,8 +761,10 @@ function parseICS(text) {
   }
   // Only the game itself is kept (teams, league, place, time); the description with other people's names is not stored.
   return out.map(e => {
-    const [first, ...rest] = (e.summary || 'Game').split('\n').map(s => s.trim()).filter(Boolean);
-    return { uid: e.uid || e.start.date + e.start.time, date: e.start.date, time: e.start.time, title: first || 'Game', league: rest.join(' ').replace(/^\[|\]$/g, ''), location: e.location || '' };
+    // "Evaluation arbitre(s):" marks a game where you supervise another referee: not a game of your own.
+    const evalRe = /^\s*[ée]valuation\s+arbitre(\(s\))?\s*:?\s*/i, isEval = evalRe.test(e.summary || '');
+    const [first, ...rest] = (e.summary || 'Game').replace(evalRe, '').split('\n').map(s => s.trim()).filter(Boolean);
+    return { eval: isEval, uid: e.uid || e.start.date + e.start.time, date: e.start.date, time: e.start.time, title: first || 'Game', league: rest.join(' ').replace(/^\[|\]$/g, ''), location: e.location || '' };
   }).sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
 }
 const cleanCalUrl = u => u.trim().replace(/^webcals?:\/\//i, 'https://');
@@ -755,10 +777,10 @@ async function fetchICS(url) {
   try { return await get(url); }
   catch (e) { if (!PLAN.calendarProxy) throw e; return get(PLAN.calendarProxy + '?url=' + encodeURIComponent(url)); }
 }
-function setGames(url, list) { games = { url, fetchedAt: Date.now(), list }; store('games', games); }
+function setGames(url, list) { games = { v: 2, url, fetchedAt: Date.now(), list }; store('games', games); }
 async function refreshGames(force) {
   const url = calUrl();
-  if (!url || url === 'file' || (!force && calActive() && Date.now() - games.fetchedAt < 6 * 3600e3)) return;
+  if (!url || url === 'file' || (!force && calActive() && games.v === 2 && Date.now() - games.fetchedAt < 6 * 3600e3)) return;
   calMsg = 'Loading…'; renderOptions();
   try { setGames(url, parseICS(await fetchICS(url))); calMsg = ''; }
   catch (e) { calMsg = calActive() ? 'Could not refresh just now; showing the games loaded earlier.' : 'Could not load this calendar. Check the link, or upload the .ics file below.'; }
@@ -785,7 +807,7 @@ function renderOptions() {
     <input id="calUrl" type="url" inputmode="url" placeholder="webcal://www.luxembourg.basketball/…/XXXXXXXX.ics" value="${esc(url === 'file' ? '' : url)}" aria-label="Calendar link">
     <div class="dlg-row"><button class="btn primary" data-act="cal-save">Save and load</button>${url && url !== 'file' ? '<button class="btn" data-act="cal-refresh">Refresh</button>' : ''}${url ? '<button class="btn" data-act="cal-remove">Remove</button>' : ''}</div>
     <p class="small" id="calMsg" style="margin:8px 0 0">${esc(calMsg) || (calActive() ? `Loaded ${new Date(games.fetchedAt).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })} · ${games.list.length} games, ${up.length} upcoming` : url ? '' : 'No calendar set: Saturdays count as game days, as in the plan.')}</p>
-    ${up.slice(0, 5).map(g => `<div class="game"><b>${esc(g.time || '–')}</b><span>${fmtDate(g.date)} · ${esc(g.title)}<span class="small muted" style="display:block">${esc(g.location)}</span></span></div>`).join('')}
+    ${up.slice(0, 5).map(g => `<div class="game"><b>${esc(g.time || '–')}</b><span>${fmtDate(g.date)} · ${esc(g.title)}${g.eval ? ' <span class="tag">evaluation</span>' : ''}<span class="small muted" style="display:block">${esc(g.location)}</span></span></div>`).join('')}
     <details><summary>Upload an .ics file instead</summary>
       <p class="small muted" style="margin:0 0 6px">If the link cannot be loaded, download the calendar file and choose it here. It will not update by itself.</p>
       <input type="file" id="calFile" accept=".ics,text/calendar"></details>
@@ -918,8 +940,8 @@ function blockHtml(b, s, editable) {
 }
 function sessionCard(date, di) {
   const { day, wi } = di, s = sess(date);
-  const head = `<h2 style="margin-bottom:0">${esc(day.title)}</h2><p class="small muted" style="margin:0 0 8px">about ${day.minutes} min${day.optional ? ' · optional' : ''}</p>`;
-  if (day.optional && wi.light) return `<div class="card">${head}<p class="muted">Dropped this week: with a midweek game or double-header the optional session is rest.</p></div>`;
+  const head = `<h2 style="margin-bottom:0">🏋️ ${esc(day.title)}</h2><p class="small muted" style="margin:0 0 8px">about ${day.minutes} min${day.optional ? ' · optional' : ''}</p>`;
+  if (day.optional && wi.light) return `<div class="card k-work">${head}<p class="muted">Dropped this week: with a midweek game or double-header the optional session is rest.</p></div>`;
   const r = s && s.readiness;
   const pick = `<p class="small muted" style="margin:4px 0">Readiness check: how do you feel?</p>
     <div class="seg">
@@ -927,9 +949,9 @@ function sessionCard(date, di) {
       <button class="btn${r === 'light' ? ' on' : ''}" data-act="ready" data-v="light">Tired / mild symptoms</button>
       <button class="btn${r === 'unwell' ? ' on' : ''}" data-act="ready" data-v="unwell">Unwell</button>
     </div>`;
-  if (!r) return `<div class="card">${head}${pick}${wi.light ? '<p class="note">Game week: the light version is planned.</p>' : ''}
+  if (!r) return `<div class="card k-work">${head}${pick}${wi.light ? '<p class="note">Game week: the light version is planned.</p>' : ''}
     <button class="linkish" data-act="skip">Skip this session</button>${s && s.status === 'skipped' ? ' <span class="pill skip">skipped</span>' : ''}</div>`;
-  if (r === 'unwell') return `<div class="card">${head}${pick}<div class="note"><b>Rest day.</b> Fever, body aches, chest symptoms or feeling properly unwell means no training.
+  if (r === 'unwell') return `<div class="card k-work">${head}${pick}<div class="note"><b>Rest day.</b> Fever, body aches, chest symptoms or feeling properly unwell means no training.
     Rest, drink, sleep. Restart with the light version once you have felt normal for a full day; after a fever, wait two to three days.</div></div>`;
   const light = wi.light || r === 'light';
   const blocks = sessionBlocks(day, light);
@@ -937,7 +959,7 @@ function sessionCard(date, di) {
   const stepNote = wantStep > step ? `<div class="note">This week is written for Achilles step ${wantStep}; you are on step ${step}, so harder drills show an easier version.
       If the Achilles has been calm for a week (3/10 or less, not worse the next morning): <button class="linkish" data-act="step" data-v="${step + 1}">move up to step ${step + 1}</button></div>` : '';
   const done = s.status === 'done';
-  return `<div class="card">${head}${pick}
+  return `<div class="card k-work">${head}${pick}
     ${light ? `<div class="note"><b>Light version</b>: about half the sets, no accelerations or intervals.${wi.light ? ' (Game week.)' : ''}</div>` : ''}
     ${stepNote}
     ${(() => { const total = blocks.reduce((n, b) => n + b.sets, 0), dn = blocks.reduce((n, b) => n + Math.min(b.sets, (s.ticks && s.ticks[b.i]) || 0), 0);
@@ -965,7 +987,7 @@ function coreCard(date) {
   const list = ph && ph.lines.length
     ? ph.lines.map((l, i) => `<label class="check"><input type="checkbox" data-act="core-check" data-i="${i}" ${c.checked && c.checked.includes(i) ? 'checked' : ''}><span>${repTag(ph, i)}${esc(l)}</span></label>`).join('')
     : `<p class="muted small">No list yet. Paste your Google Keep note on the <button class="linkish" data-tab="physio">Physio core</button> screen.</p>`;
-  return `<div class="card"><div class="spread"><h2>Physio core</h2><span class="small muted">${days} of 7 days this week</span></div>
+  return `<div class="card k-core"><div class="spread"><h2>✚ Physio core</h2><span class="small muted">${days} of 7 days this week</span></div>
     ${list}
     ${ph && ph.lines.length ? '<p class="small muted" style="margin:6px 0 0">Tick every box and the round is counted and the ticks are cleared.</p>' : ''}
     <div class="row" style="margin-top:8px">
@@ -985,7 +1007,7 @@ function yogaHref() {
 }
 function yogaCard(date, type) {
   const y = data.yoga[date], done = !!(y && y.done);
-  return `<div class="card"><div class="spread"><h2>${type === 'recovery' ? 'Recovery: yoga / mobility' : 'Yoga / mobility'} <span class="small muted">(10–20 min)</span></h2><span class="tag">optional</span></div>
+  return `<div class="card k-yoga"><div class="spread"><h2>🧘 ${type === 'recovery' ? 'Recovery: yoga / mobility' : 'Yoga / mobility'} <span class="small muted">(10–20 min)</span></h2><span class="tag">optional</span></div>
     <p class="small muted" style="margin:4px 0">Hips, hamstrings, ankles/calves, back. A suggestion, never a requirement.</p>
     <div class="row"><button class="btn${done ? ' on' : ''}" data-act="yoga">${done ? '✓ Done' : 'Done'}</button>
       <button class="linkish" data-act="routine">Short routine</button>
@@ -1019,12 +1041,22 @@ function renderToday() {
     const d = addDays(mon, i), t = dayInfo(d), s = data.sessions[d];
     const dot = s && s.status === 'done' ? 'dn' : s && (s.status === 'skipped' || s.readiness === 'unwell') ? 'skip' : t.type === 'session' && !(t.day.optional && t.wi.light) ? 'session' : t.type === 'game' ? 'game' : '';
     const gd = t.type === 'game', gt = gd && t.day.games && t.day.games[0] ? t.day.games[0].time : '';
-    return `<button class="sd${gd ? ' gd' : ''}${d === date ? ' sel' : ''}${d === today ? ' now' : ''}" data-act="open-day" data-v="${d}" aria-label="${fmtDate(d, true)}${gd ? ', game' + (gt ? ' at ' + esc(gt) : '') : ''}"><span>${k[0].toUpperCase() + k[1]}</span><b>${parseDate(d).getDate()}</b>${gd ? `<em>🏀${gt ? `<small>${esc(gt)}</small>` : ''}</em>` : `<i class="${dot}"></i>`}</button>`;
+    // Done marks: workout, yoga, physio core. An evaluation (you supervise) shows as an eye.
+    const y = data.yoga[d], marks = [], said = [];
+    if (t.evals.length) { marks.push('👁'); said.push('referee evaluation'); }
+    if (s && s.status === 'done') { marks.push('🏋️'); said.push('workout done'); }
+    if (y && y.done) { marks.push('🧘'); said.push('yoga done'); }
+    if (coreOf(d).rounds > 0) { marks.push('<span class="c">✚</span>'); said.push('physio core done'); }
+    const mk = marks.length ? `<u>${marks.join('')}</u>` : '';
+    return `<button class="sd${gd ? ' gd' : ''}${d === date ? ' sel' : ''}${d === today ? ' now' : ''}" data-act="open-day" data-v="${d}" aria-label="${fmtDate(d, true)}${gd ? ', game' + (gt ? ' at ' + esc(gt) : '') : ''}${said.length ? ', ' + said.join(', ') : ''}"><span>${k[0].toUpperCase() + k[1]}</span><b>${parseDate(d).getDate()}</b>${gd ? `<em>🏀${gt ? `<small>${esc(gt)}</small>` : ''}</em>${mk}` : mk || `<i class="${dot}"></i>`}</button>`;
   }).join('');
+  const evalNote = di.evals.length ? `<div class="card"><h2>👁 Referee evaluation</h2>
+      ${di.evals.map(g => `<div class="game"><b>${esc(g.time || '–')}</b><span>${esc(g.title)}<span class="small muted" style="display:block">${esc([g.league, g.location].filter(Boolean).join(' · '))}</span></span></div>`).join('')}
+      <p class="muted small" style="margin:8px 0 0">You supervise and are not on court, so this does not count as a game: training stays as planned.</p></div>` : '';
   return `<div class="card top"><div class="spread"><div><div class="eyebrow">${isToday ? 'Today' : '<button class="linkish" data-act="day" data-v="0">← Back to today</button>'}</div><h2>${fmtDate(date, true)}</h2></div>
       <span class="row"><button class="btn navbtn" data-act="day" data-v="-7" aria-label="Previous week">‹</button><button class="btn navbtn" data-act="day" data-v="7" aria-label="Next week">›</button></span></div>
-      <div class="strip">${strip}</div>${wk}</div>
-    <div class="cols"><div>${main}${showYoga ? yogaCard(date, type) : ''}${type === 'session' ? timersCard() : ''}</div>
+      <div class="strip">${strip}</div><p class="legend">Done: 🏋️ workout · 🧘 yoga · <span class="c">✚</span> physio core</p>${wk}</div>
+    <div class="cols"><div>${main}${evalNote}${showYoga ? yogaCard(date, type) : ''}${type === 'session' ? timersCard() : ''}</div>
     <div>${coreCard(date)}${achillesCard(date, type)}${type === 'session' ? '' : timersCard()}</div></div>`;
 }
 
@@ -1195,7 +1227,7 @@ function renderSounds() {
     <p class="small muted" style="margin:4px 0 8px">Choose your own sound file for each event (MP3, WAV, M4A or OGG, up to 2 MB). Files stay on this device only.</p>
     ${Object.entries(SOUND_EVENTS).map(([id, [label, n]]) => `<div class="sndrow"><span><b>${label}</b><span class="small muted" style="display:block">${sounds[id] ? esc(sounds[id].name) : n ? 'Default beep' : 'Silent'}</span></span>
       <span class="row" style="flex-wrap:nowrap;gap:6px"><button class="btn" data-act="snd-test" data-v="${id}" aria-label="Play: ${label}" ${sounds[id] || n ? '' : 'disabled'}>▶</button>
-      <label class="btn" style="cursor:pointer">Choose<input type="file" accept="audio/*" data-snd="${id}" hidden></label>
+      <label class="btn" style="cursor:pointer">Choose<input type="file" data-snd="${id}" hidden></label>
       ${sounds[id] ? `<button class="btn" data-act="snd-reset" data-v="${id}" aria-label="Remove my sound for: ${label}">✕</button>` : ''}</span></div>`).join('')}
     <p class="small" style="margin:6px 0 0">${esc(soundMsg)}</p>`;
 }
