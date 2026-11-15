@@ -246,7 +246,7 @@ main{padding-top:14px} .card{box-shadow:0 1px 2px rgba(60,30,0,.04)}
             Days not listed are off days. type: 'game' | 'recovery'. optional: true = optional third session.
    After the last week the app repeats weeks from `repeatFrom` until you add more weeks.
    ===================================================================================== */
-const APP_VERSION = "v13";   // keep the same as VERSION in sw.js
+const APP_VERSION = "v14";   // keep the same as VERSION in sw.js
 const PLAN = {
   startDate: '2026-11-16',            // Monday of week 1
   repeatFrom: 5,                      // after the last week, cycle weeks 5…8
@@ -1319,14 +1319,22 @@ $('#ivStart').onclick = ivStart; $('#ivStop').onclick = () => ivStop();
 $('#ivDlg').addEventListener('close', () => ivStop());
 
 /* ---------- keep the screen awake (optional) ---------- */
-let wakeLock = null;
+let wakeLock = null, wakeBusy = false;
 async function wakeLockSync() {
-  if (!('wakeLock' in navigator)) return;
+  if (!('wakeLock' in navigator) || wakeBusy) return;
+  wakeBusy = true;
   try {
-    if (settings.keepAwake && !document.hidden) { if (!wakeLock) { wakeLock = await navigator.wakeLock.request('screen'); wakeLock.addEventListener('release', () => { wakeLock = null; }); } }
-    else if (wakeLock) { await wakeLock.release(); wakeLock = null; }
+    if (settings.keepAwake && !document.hidden) {
+      if (!wakeLock || wakeLock.released) { const w = await navigator.wakeLock.request('screen'); wakeLock = w; w.addEventListener('release', () => { if (wakeLock === w) wakeLock = null; }); }
+    } else if (wakeLock) { const w = wakeLock; wakeLock = null; await w.release(); }
   } catch (e) { wakeLock = null; }
+  wakeBusy = false;
 }
+/* The phone can refuse or drop the lock (app in the background, low battery mode, a call). Ask again on every tap,
+   whenever the app comes back to the front, and every 20 s while it is open. */
+['touchend', 'click'].forEach(t => document.addEventListener(t, () => { if (settings.keepAwake && !wakeLock) wakeLockSync(); }, { capture: true, passive: true }));
+['pageshow', 'focus'].forEach(t => window.addEventListener(t, () => wakeLockSync()));
+setInterval(() => { if (settings.keepAwake && !document.hidden && !wakeLock) wakeLockSync(); }, 20000);
 
 /* ================= Export / import ================= */
 function exportJSON() { return JSON.stringify({ app: 'workout-planner', version: 1, exportedAt: new Date().toISOString(), data }, null, 2); }
