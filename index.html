@@ -246,7 +246,7 @@ main{padding-top:14px} .card{box-shadow:0 1px 2px rgba(60,30,0,.04)}
             Days not listed are off days. type: 'game' | 'recovery'. optional: true = optional third session.
    After the last week the app repeats weeks from `repeatFrom` until you add more weeks.
    ===================================================================================== */
-const APP_VERSION = "v12";   // keep the same as VERSION in sw.js
+const APP_VERSION = "v13";   // keep the same as VERSION in sw.js
 const PLAN = {
   startDate: '2026-11-16',            // Monday of week 1
   repeatFrom: 5,                      // after the last week, cycle weeks 5…8
@@ -567,7 +567,7 @@ const hasData = d => !!d && (['sessions', 'core', 'yoga', 'pain', 'tests', 'week
    of the page calls Workout.setAccount() with the loaded data plus load/save functions. A copy is kept in
    this browser while signed in so the app still opens offline. Settings always stay on the device. */
 let data = normalize(load('data', null));
-const settings = Object.assign({ keepAwake: false, autoRest: true, sound: true, tab: 'today' }, load('settings', {}));
+const settings = Object.assign({ keepAwake: false, autoRest: true, sound: true, loud: true, tab: 'today' }, load('settings', {}));
 const saveSettings = () => store('settings', settings);
 const account = { available: false, user: null, saveFn: null, loadFn: null, status: '', dirty: false, cloudLoaded: false };
 let saveTimer = null;
@@ -819,6 +819,7 @@ function renderOptions() {
     <label class="check"><input type="checkbox" data-set="keepAwake" ${settings.keepAwake ? 'checked' : ''}><span>Keep the screen awake${'wakeLock' in navigator ? '' : ' (not supported in this browser)'}</span></label>
     <label class="check"><input type="checkbox" data-set="autoRest" ${settings.autoRest ? 'checked' : ''}><span>Start the rest timer when I tick a set</span></label>
     <label class="check"><input type="checkbox" data-set="sound" ${settings.sound ? 'checked' : ''}><span>Sounds on</span></label>
+    <label class="check"><input type="checkbox" data-set="loud" ${settings.loud ? 'checked' : ''}><span>Play sounds even when the phone is on silent (iPhone; may pause your music)</span></label>
     <div id="optSounds"></div>
     <h3>App version</h3>
     <p class="small muted" style="margin:4px 0 8px">This device runs ${APP_VERSION}. New versions normally arrive by themselves when you open the app.</p>
@@ -848,7 +849,7 @@ $('#optBody').addEventListener('click', e => {
 });
 $('#optBody').addEventListener('change', e => {
   const k = e.target.dataset.set;
-  if (k) { settings[k] = e.target.checked; saveSettings(); if (k === 'keepAwake') wakeLockSync(); return render(); }
+  if (k) { settings[k] = e.target.checked; saveSettings(); if (k === 'keepAwake') wakeLockSync(); if (k === 'loud') audioMode(); return render(); }
   if (e.target.dataset.snd) { if (e.target.files[0]) soundChoose(e.target.dataset.snd, e.target.files[0]); return; }
   if (e.target.id !== 'calFile' || !e.target.files[0]) return;
   const r = new FileReader();
@@ -1178,8 +1179,7 @@ function beep(n = 1, freq = 880) {
   if (navigator.vibrate) try { navigator.vibrate(n > 1 ? [200, 100, 200] : 200); } catch (e) {}
   if (!settings.sound) return;
   try {
-    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
-    if (audioCtx.state === 'suspended') audioCtx.resume();
+    audio();
     for (let i = 0; i < n; i++) {
       const o = audioCtx.createOscillator(), g = audioCtx.createGain(), t = audioCtx.currentTime + i * 0.28;
       o.frequency.value = freq; o.connect(g); g.connect(audioCtx.destination);
@@ -1210,7 +1210,16 @@ async function soundsLoad() {
     await Promise.all(Object.keys(SOUND_EVENTS).map(id => new Promise(res => { const g = st.get(id); g.onsuccess = () => { if (g.result) sounds[id] = { name: g.result.name, bytes: g.result.bytes }; res(); }; g.onerror = res; })));
   } catch (e) {}
 }
-function audio() { audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)(); if (audioCtx.state === 'suspended') audioCtx.resume(); return audioCtx; }
+/* iPhone: by default a web page's sounds follow the ring/silent switch, so with the phone on silent nothing is heard.
+   Asking for the "playback" kind of audio (iOS 17 and later) makes them play anyway; it can pause music from another app. */
+function audioMode() { try { if (navigator.audioSession) navigator.audioSession.type = settings.loud ? 'playback' : 'auto'; } catch (e) {} }
+function audio() {
+  if (!audioCtx) { audioMode(); audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+  if (audioCtx.state !== 'running') audioCtx.resume().catch(() => {});   // "suspended", or "interrupted" after a call or the lock screen
+  return audioCtx;
+}
+/* Browsers only allow sound after a touch, and iPhone pauses the audio again when the app goes to the background: wake it on every tap. */
+['touchend', 'click'].forEach(t => document.addEventListener(t, () => { if (settings.sound) try { audio(); } catch (e) {} }, { capture: true, passive: true }));
 const decode = s => s.buffer ? Promise.resolve(s.buffer) : audio().decodeAudioData(s.bytes.slice(0)).then(b => (s.buffer = b));
 /* Call on a tap that starts something: browsers only allow sound after a touch, so wake the audio and decode your files now. */
 function unlockAudio() { if (!settings.sound) return; try { audio(); Object.values(sounds).forEach(s => decode(s).catch(() => {})); } catch (e) {} }
