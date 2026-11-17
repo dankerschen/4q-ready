@@ -74,4 +74,6 @@ Open `index.html` and edit the `PLAN` object:
 - `weeks`: the week grid. Each day lists `{ block, sets, note }`; `sets` is the number of circles.
 - After the last week the app repeats weeks from `repeatFrom`.
 
+Workouts can be moved to another day of the same week ("Move" on the Today screen or in the Week view; two workouts swap). On Sunday from noon the Today screen asks you to plan the coming week; add `?plan=1` to the address to see that card any day.
+
 To preview another day, add `?date=2026-11-17` to the address.

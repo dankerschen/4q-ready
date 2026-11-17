@@ -92,6 +92,12 @@ dialog::backdrop{background:rgba(0,0,0,.5)}
 .wkrow{display:grid;grid-template-columns:64px 1fr auto;gap:8px;align-items:center;width:100%;text-align:left;font:inherit;color:var(--ink);
   background:none;border:0;border-top:1px solid var(--line);padding:10px 0;min-height:56px;cursor:pointer}
 .wkrow.today .d{color:var(--accent);font-weight:700}
+.wkline{display:flex;align-items:center;gap:8px;border-top:1px solid var(--line)} .wkline .wkrow{border-top:0;flex:1;min-width:0}
+.mvbtn{min-height:36px;padding:4px 10px;font-size:14px}
+.planrow{display:grid;grid-template-columns:52px 1fr auto;gap:8px;align-items:center;border-top:1px solid var(--line);padding:6px 0;min-height:48px}
+.planrow .d{font-size:14px;color:var(--muted)}
+.mvday{display:flex;width:100%;justify-content:space-between;align-items:center;gap:8px;text-align:left;margin:0 0 6px}
+.mvday b{white-space:nowrap} .mvday span{display:flex;flex-direction:column;align-items:flex-end;gap:2px;font-size:14px} .mvday:disabled{opacity:.45}
 .marks{display:flex;gap:6px;align-items:center;font-size:13px;white-space:nowrap}
 .pill{font-size:12px;padding:2px 8px;border-radius:99px;background:var(--chip);color:var(--muted)}
 .pill.done{background:var(--good);color:var(--card)} .pill.skip{background:var(--chip);color:var(--bad)}
@@ -213,6 +219,7 @@ main{padding-top:14px} .card{box-shadow:0 1px 2px rgba(60,30,0,.04)}
 
 <dialog id="acctDlg"><div id="acctBody"></div><div class="dlg-row"><button class="btn" data-close>Close</button></div></dialog>
 <dialog id="optDlg"><div id="optBody"></div><div class="dlg-row"><button class="btn" data-close>Close</button></div></dialog>
+<dialog id="moveDlg"><div id="moveBody"></div><div class="dlg-row"><button class="btn" data-close>Cancel</button></div></dialog>
 <dialog id="infoDlg"><div id="infoBody"></div><div class="dlg-row"><button class="btn" data-close>Close</button></div></dialog>
 <dialog id="askDlg"><p id="askMsg"></p><div class="dlg-row"><button class="btn primary" id="askYes">Yes</button><button class="btn" id="askNo">No</button></div></dialog>
 <dialog id="ivDlg">
@@ -246,7 +253,7 @@ main{padding-top:14px} .card{box-shadow:0 1px 2px rgba(60,30,0,.04)}
             Days not listed are off days. type: 'game' | 'recovery'. optional: true = optional third session.
    After the last week the app repeats weeks from `repeatFrom` until you add more weeks.
    ===================================================================================== */
-const APP_VERSION = "v14";   // keep the same as VERSION in sw.js
+const APP_VERSION = "v15";   // keep the same as VERSION in sw.js
 const PLAN = {
   startDate: '2026-11-16',            // Monday of week 1
   repeatFrom: 5,                      // after the last week, cycle weeks 5…8
@@ -557,7 +564,7 @@ const load = (k, d) => { try { const v = localStorage.getItem(LS + k); return v 
 const store = (k, v) => { try { localStorage.setItem(LS + k, JSON.stringify(v)); } catch (e) {} };
 const unstore = k => { try { localStorage.removeItem(LS + k); } catch (e) {} };
 
-const emptyData = () => ({ v: 1, sessions: {}, core: {}, yoga: {}, pain: {}, tests: {}, weekFlags: {}, ivPresets: {}, achilles: { step: 1, t: 0 }, physio: { current: null, archive: [] } });
+const emptyData = () => ({ v: 1, sessions: {}, core: {}, yoga: {}, pain: {}, tests: {}, weekFlags: {}, ivPresets: {}, moves: {}, planned: {}, achilles: { step: 1, t: 0 }, physio: { current: null, archive: [] } });
 const normalize = d => { const e = emptyData(); d = d || {}; return { ...e, ...d, physio: { ...e.physio, ...(d.physio || {}) }, achilles: d.achilles || e.achilles }; };
 const hasData = d => !!d && (['sessions', 'core', 'yoga', 'pain', 'tests', 'weekFlags'].some(k => Object.keys(d[k] || {}).length) || !!(d.physio && d.physio.current));
 
@@ -578,7 +585,7 @@ function mergeData(a, b) {
   const newer = (x, y) => !x ? y : !y ? x : ((y.t || 0) > (x.t || 0) ? y : x);
   const mergeMap = (A, B) => { const o = { ...A }; for (const k in B) o[k] = newer(A[k], B[k]); return o; };
   const out = { v: 1 };
-  ['sessions', 'core', 'yoga', 'pain', 'tests', 'weekFlags', 'ivPresets'].forEach(k => out[k] = mergeMap(a[k], b[k]));
+  ['sessions', 'core', 'yoga', 'pain', 'tests', 'weekFlags', 'ivPresets', 'moves', 'planned'].forEach(k => out[k] = mergeMap(a[k], b[k]));
   out.achilles = newer(a.achilles, b.achilles);
   const yl = newer(a.yogaLink, b.yogaLink); if (yl) out.yogaLink = yl;
   const gc = newer(a.gameCal, b.gameCal); if (gc) out.gameCal = gc;
@@ -679,6 +686,12 @@ document.addEventListener('click', e => {
     ${d.physio ? `<p class="note">Ask your physio first: ${esc(d.physio)}.</p>` : ''}`);
 });
 document.addEventListener('click', e => { const b = e.target.closest('[data-close]'); if (b) b.closest('dialog').close(); });
+$('#moveDlg').addEventListener('click', e => {
+  const b = e.target.closest('[data-act]'); if (!b) return;
+  if (b.dataset.act === 'move-to') { const from = b.dataset.from; swapDays(mondayOf(from), dayKey(from), dayKey(b.dataset.v)); persist(); }
+  else if (b.dataset.act === 'move-reset') resetMoves(b.dataset.v);
+  $('#moveDlg').close(); render();
+});
 
 /* ================= Plan lookups ================= */
 function weekInfo(dateIso) {
@@ -696,7 +709,9 @@ function weekInfo(dateIso) {
 }
 function dayInfo(dateIso) {
   const wi = weekInfo(dateIso);
-  let day = (wi.week && wi.week.days[dayKey(dateIso)]) || { type: 'off' }, evals = [];
+  const k = dayKey(dateIso), src = (wi.week && layoutOf(wi.id)[k]) || k;   // a workout you moved shows on its new day
+  let day = (wi.week && wi.week.days[src]) || { type: 'off' }, evals = [];
+  if (src !== k && day.blocks) day = { ...day, movedFrom: src };
   if (calActive()) {            // game days come from the calendar instead of the plan's fixed Saturday
     const all = gamesOn(dateIso), g = all.filter(x => !x.eval);
     evals = all.filter(x => x.eval);   // referee evaluations: you supervise, so the day stays a normal training day
@@ -705,6 +720,54 @@ function dayInfo(dateIso) {
   }
   const type = day.blocks ? 'session' : (day.type || 'off');
   return { wi, day, type, evals };
+}
+/* ================= Moving workouts within a week =================
+   data.moves[monday] = { days: { thu: 'tue', tue: 'thu' }, t }: the day on the left shows what the plan has on the right.
+   Moving always swaps two days of the same week, and the session record (ticks, notes) travels with the workout. */
+const DAYNAMES = { mon: 'Monday', tue: 'Tuesday', wed: 'Wednesday', thu: 'Thursday', fri: 'Friday', sat: 'Saturday', sun: 'Sunday' };
+function layoutOf(mon) { const m = (data.moves && data.moves[mon] && data.moves[mon].days) || {}, L = {}; DAYKEYS.forEach(k => L[k] = m[k] || k); return L; }
+const isMoved = mon => DAYKEYS.some(k => layoutOf(mon)[k] !== k);
+function setLayout(mon, L) { const days = {}; DAYKEYS.forEach(k => { if (L[k] !== k) days[k] = L[k]; }); data.moves[mon] = { days, t: now() }; }
+function swapDays(mon, a, b) {
+  const L = layoutOf(mon); [L[a], L[b]] = [L[b], L[a]]; setLayout(mon, L);
+  const da = addDays(mon, DAYKEYS.indexOf(a)), db = addDays(mon, DAYKEYS.indexOf(b)), sa = data.sessions[da], sb = data.sessions[db], t = now();
+  const blank = () => ({ ticks: {}, weights: {}, notes: '', t });
+  if (sa || sb) { data.sessions[da] = sb ? { ...sb, t } : blank(); data.sessions[db] = sa ? { ...sa, t } : blank(); }
+}
+function resetMoves(mon) {              // swap back one pair at a time so the session records follow
+  for (let guard = 0; guard < 7 && isMoved(mon); guard++) {
+    const L = layoutOf(mon), k = DAYKEYS.find(x => L[x] !== x), j = DAYKEYS.find(x => L[x] === k);
+    swapDays(mon, k, j);
+  }
+  persist();
+}
+/* What a day would look like with another layout of its week (for the warnings in the move dialog). */
+function withLayout(mon, L, fn) { const keep = data.moves[mon]; setLayout(mon, L); try { return fn(); } finally { if (keep) data.moves[mon] = keep; else delete data.moves[mon]; } }
+function moveTargets(date) {
+  const mon = mondayOf(date), from = dayKey(date), today = todayIso();
+  return DAYKEYS.map((k, i) => {
+    const d = addDays(mon, i), cur = dayInfo(d);
+    if (k === from) return null;
+    const why = d < today ? 'in the past' : cur.type === 'game' ? 'game day' : '';
+    const L = layoutOf(mon); [L[from], L[k]] = [L[k], L[from]];
+    const warn = why ? [] : withLayout(mon, L, () => {
+      const w = [], isW = x => dayInfo(x).type === 'session';
+      if (dayInfo(addDays(d, 1)).type === 'game') w.push('day before a game');
+      if (isW(addDays(d, -1)) || isW(addDays(d, 1))) w.push('next to another workout');
+      return w;
+    });
+    return { d, k, cur, why, warn };
+  }).filter(Boolean);
+}
+function openMove(date) {
+  const di = dayInfo(date), mon = mondayOf(date);
+  $('#moveBody').innerHTML = `<h2 style="margin-top:0">Move: ${esc(di.day.title)}</h2>
+    <p class="small muted" style="margin:0 0 8px">From ${fmtDate(date, true)} to another day this week. If that day has a workout too, the two swap.</p>
+    ${moveTargets(date).map(t => `<button class="btn mvday" data-act="move-to" data-from="${date}" data-v="${t.d}" ${t.why ? 'disabled' : ''}>
+      <b>${fmtDate(t.d)}</b><span>${t.why ? esc(t.why) : t.cur.type === 'session' ? 'swap with ' + esc(t.cur.day.title) : t.cur.type === 'recovery' ? 'recovery day' : 'free'}
+      ${t.warn.length ? `<span class="tag w">${esc(t.warn.join(', '))}</span>` : ''}</span></button>`).join('')}
+    ${isMoved(mon) ? `<button class="linkish" data-act="move-reset" data-v="${mon}" style="margin-top:8px">Undo all moves this week</button>` : ''}`;
+  $('#moveDlg').showModal();
 }
 const achStep = () => Math.min(4, Math.max(1, (data.achilles && data.achilles.step) || 1));
 /* The blocks to show for a session: full or light version, with Achilles-gated drills swapped for their fallback. */
@@ -941,7 +1004,7 @@ function blockHtml(b, s, editable) {
 }
 function sessionCard(date, di) {
   const { day, wi } = di, s = sess(date);
-  const head = `<h2 style="margin-bottom:0">🏋️ ${esc(day.title)}</h2><p class="small muted" style="margin:0 0 8px">about ${day.minutes} min${day.optional ? ' · optional' : ''}</p>`;
+  const head = `<h2 style="margin-bottom:0">🏋️ ${esc(day.title)}</h2><p class="small muted" style="margin:0 0 8px">about ${day.minutes} min${day.optional ? ' · optional' : ''}${day.movedFrom ? ` · moved from ${DAYNAMES[day.movedFrom]}` : ''}</p>`;
   if (day.optional && wi.light) return `<div class="card k-work">${head}<p class="muted">Dropped this week: with a midweek game or double-header the optional session is rest.</p></div>`;
   const r = s && s.readiness;
   const pick = `<p class="small muted" style="margin:4px 0">Readiness check: how do you feel?</p>
@@ -951,7 +1014,7 @@ function sessionCard(date, di) {
       <button class="btn${r === 'unwell' ? ' on' : ''}" data-act="ready" data-v="unwell">Unwell</button>
     </div>`;
   if (!r) return `<div class="card k-work">${head}${pick}${wi.light ? '<p class="note">Game week: the light version is planned.</p>' : ''}
-    <button class="linkish" data-act="skip">Skip this session</button>${s && s.status === 'skipped' ? ' <span class="pill skip">skipped</span>' : ''}</div>`;
+    <button class="linkish" data-act="skip">Skip this session</button> · <button class="linkish" data-act="move" data-v="${date}">Move to another day</button>${s && s.status === 'skipped' ? ' <span class="pill skip">skipped</span>' : ''}</div>`;
   if (r === 'unwell') return `<div class="card k-work">${head}${pick}<div class="note"><b>Rest day.</b> Fever, body aches, chest symptoms or feeling properly unwell means no training.
     Rest, drink, sleep. Restart with the light version once you have felt normal for a full day; after a fever, wait two to three days.</div></div>`;
   const light = wi.light || r === 'light';
@@ -969,7 +1032,7 @@ function sessionCard(date, di) {
     <div class="block"><label class="small muted" for="notes">Notes</label><textarea id="notes" data-field="notes" style="min-height:64px" placeholder="How it went, weights, anything to remember">${esc(s.notes || '')}</textarea></div>
     <div class="row" style="margin-top:10px">
       <button class="btn primary" style="flex:1" data-act="finish">${done ? '✓ Session done (tap to reopen)' : 'Finish session'}</button>
-      ${done ? '' : `<button class="btn" data-act="skip">${s.status === 'skipped' ? 'Skipped (tap to undo)' : 'Skip'}</button>`}
+      ${done ? '' : `<button class="btn" data-act="skip">${s.status === 'skipped' ? 'Skipped (tap to undo)' : 'Skip'}</button><button class="btn" data-act="move" data-v="${date}">Move</button>`}
     </div></div>`;
 }
 function achillesCard(date, type) {
@@ -1057,10 +1120,29 @@ function renderToday() {
   return `<div class="card top"><div class="spread"><div><div class="eyebrow">${isToday ? 'Today' : '<button class="linkish" data-act="day" data-v="0">← Back to today</button>'}</div><h2>${fmtDate(date, true)}</h2></div>
       <span class="row"><button class="btn navbtn" data-act="day" data-v="-7" aria-label="Previous week">‹</button><button class="btn navbtn" data-act="day" data-v="7" aria-label="Next week">›</button></span></div>
       <div class="strip">${strip}</div><p class="legend">Done: 🏋️ workout · 🧘 yoga · <span class="c">✚</span> physio core</p>${wk}</div>
+    ${isToday ? planCard() : ''}
     <div class="cols"><div>${main}${evalNote}${showYoga ? yogaCard(date, type) : ''}${type === 'session' ? timersCard() : ''}</div>
     <div>${coreCard(date)}${achillesCard(date, type)}${type === 'session' ? '' : timersCard()}</div></div>`;
 }
 
+/* Sunday from noon: ask to plan the coming week, once per week, until you confirm it. (?plan=1 shows it any time.) */
+function planCard() {
+  const t = todayIso(), q = new URLSearchParams(location.search);
+  if (!q.has('plan') && (dayKey(t) !== 'sun' || new Date().getHours() < 12)) return '';
+  const mon = addDays(mondayOf(t), 7), wi = weekInfo(mon);
+  if (!wi.week || data.planned[mon]) return '';
+  const rows = DAYKEYS.map((k, i) => {
+    const d = addDays(mon, i), st = dayStatus(d), di = dayInfo(d);
+    return `<div class="planrow"><span class="d">${fmtDate(d).replace(',', '').replace(/ S+$/, '')}</span><span>${di.type === 'game' ? '🏀 ' : di.evals.length ? '👁 ' : ''}${esc(st.label)}</span>
+      ${di.type === 'session' ? `<button class="btn mvbtn" data-act="move" data-v="${d}">Move</button>` : '<span></span>'}</div>`;
+  }).join('');
+  return `<div class="card k-work"><h2>🗓 Plan next week</h2>
+    <p class="small muted" style="margin:0 0 6px">Week ${wi.n} · ${fmtDate(mon)} – ${fmtDate(addDays(mon, 6))}. You know your week now: move workouts away from busy evenings and game days.${calActive() ? ' Games from your calendar are already in.' : ''}</p>
+    ${rows}
+    <label class="check"><input type="checkbox" data-act="week-light" data-v="${mon}" ${wi.light ? 'checked' : ''}><span>Midweek game / double-header: use the lighter week${wi.lightAuto ? ' <span class="tag w">set from your calendar</span>' : ''}</span></label>
+    ${isMoved(mon) ? `<p class="small" style="margin:4px 0 0"><button class="linkish" data-act="move-reset" data-v="${mon}">Undo all moves</button></p>` : ''}
+    <div class="row" style="margin-top:8px"><button class="btn primary" data-act="plan-ok" data-v="${mon}">Week looks good</button></div></div>`;
+}
 function dayStatus(date) {
   const { type, day, wi } = dayInfo(date), s = data.sessions[date];
   if (type === 'game' && day.games) return { label: day.games.map(g => `Game ${g.time} · ${g.title}`).join(' / '), pill: '' };
@@ -1071,7 +1153,7 @@ function dayStatus(date) {
   else if (s && s.readiness === 'unwell') pill = '<span class="pill skip">rest (unwell)</span>';
   else if (day.optional && wi.light) pill = '<span class="pill">dropped</span>';
   else if (s && Object.values(s.ticks || {}).some(Boolean)) pill = '<span class="pill">started</span>';
-  return { label: day.title, minutes: day.minutes, pill };
+  return { label: day.title + (day.movedFrom ? ` (moved from ${DAYNAMES[day.movedFrom].slice(0, 3)})` : ''), minutes: day.minutes, pill };
 }
 const openBlocks = new Set();   // finished blocks the user re-opened (finished blocks fold their exercise list)
 let weekView = null, physioEdit = null;   // physioEdit: the lines being edited on the Physio core screen
@@ -1079,10 +1161,11 @@ function renderWeek() {
   const mon = weekView || mondayOf(viewDate), wi = weekInfo(mon), today = todayIso();
   const rows = DAYKEYS.map((k, i) => {
     const d = addDays(mon, i), st = dayStatus(d), c = coreOf(d), y = data.yoga[d];
-    return `<button class="wkrow${d === today ? ' today' : ''}" data-act="open-day" data-v="${d}">
+    const canMove = dayInfo(d).type === 'session' && !(data.sessions[d] && data.sessions[d].status === 'done');
+    return `<div class="wkline"><button class="wkrow${d === today ? ' today' : ''}" data-act="open-day" data-v="${d}">
       <span class="d">${fmtDate(d).replace(',', '')}</span>
       <span>${esc(st.label)}${st.minutes ? ` <span class="small muted">· ${st.minutes} min</span>` : ''} ${st.pill}</span>
-      <span class="marks">${c.rounds ? `<span class="pill done" title="Physio core rounds">core ${c.rounds}</span>` : '<span class="pill" title="Physio core">core –</span>'}${y && y.done ? '<span class="pill done">yoga ✓</span>' : ''}</span></button>`;
+      <span class="marks">${c.rounds ? `<span class="pill done" title="Physio core rounds">core ${c.rounds}</span>` : '<span class="pill" title="Physio core">core –</span>'}${y && y.done ? '<span class="pill done">yoga ✓</span>' : ''}</span></button>${canMove ? `<button class="btn mvbtn" data-act="move" data-v="${d}" aria-label="Move this workout">Move</button>` : ''}</div>`;
   }).join('');
   const coreDays = DAYKEYS.filter((_, i) => coreOf(addDays(mon, i)).rounds > 0).length;
   const overview = PLAN.weeks.map(w => `<tr><td><b>${w.n}</b></td><td><b>${esc(w.title)}</b>${w.outline ? ' <span class="tag">outline</span>' : ''}<br><span class="small muted">${esc(w.purpose)}</span><br>
@@ -1094,6 +1177,7 @@ function renderWeek() {
     ${wi.week ? `<p class="small" style="margin:6px 0">${esc(wi.week.purpose)}</p>
     <label class="check"><input type="checkbox" data-act="week-light" data-v="${mon}" ${wi.light ? 'checked' : ''}><span>Midweek game / double-header: use the lighter week${wi.lightAuto ? ' <span class="tag w">set from your calendar</span>' : ''}</span></label>` : `<p class="small">The plan starts on ${fmtDate(PLAN.startDate, true)}.</p>`}
     ${rows}
+    ${isMoved(mon) ? `<p class="small" style="margin:8px 0 0">Workouts moved this week. <button class="linkish" data-act="move-reset" data-v="${mon}">Undo all moves</button></p>` : ''}
     <p class="small muted" style="margin:10px 0 0">Physio core on ${coreDays} of 7 days this week.</p></div>
     <div class="card"><h2>Plan overview</h2><table>${overview}</table>
       <p class="small muted">Weeks 5–8 are an outline and will be adjusted after the week-4 test. After week ${PLAN.weeks.length} the app repeats weeks ${PLAN.repeatFrom}–${PLAN.weeks.length}.</p></div>
@@ -1373,6 +1457,9 @@ view.addEventListener('click', async e => {
       break; }
     case 'toggle-block': { const k = date + ':' + b.dataset.i; openBlocks.has(k) ? openBlocks.delete(k) : openBlocks.add(k); break; }
     case 'finish': touchSession(date, s => { s.status = s.status === 'done' ? null : 'done'; if (s.status) sound('session'); }); break;
+    case 'move': return openMove(v);
+    case 'move-reset': resetMoves(v); break;
+    case 'plan-ok': data.planned[v] = { t: now() }; persist(); break;
     case 'skip': touchSession(date, s => { s.status = s.status === 'skipped' ? null : 'skipped'; }); break;
     case 'pain': setPain(date, b.dataset.field, +v); break;
     case 'step': data.achilles = { step: +v, t: now() }; persist(); break;
